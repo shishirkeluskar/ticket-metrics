@@ -1,4 +1,11 @@
 package com.shishir.ticketmetrics.model;
 
-public class Ticket {
+import java.time.OffsetDateTime;
+
+public record Ticket(
+    Integer id,
+    String subject,
+    OffsetDateTime createdAt
+)
+{
 }

@@ -1,4 +1,10 @@
 package com.shishir.ticketmetrics.model;
 
-public class RatingCategory {
+import java.math.BigDecimal;
+
+public record RatingCategory(
+    Integer id,
+    String name,
+    BigDecimal weight
+) {
 }

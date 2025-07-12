@@ -1,4 +1,4 @@
-package com.shishir.ticketmetrics.service;
+package com.shishir.ticketmetrics.calculator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

@@ -1,6 +1,5 @@
-package com.shishir.ticketmetrics.service;
+package com.shishir.ticketmetrics.calculator;
 
-import com.shishir.ticketmetrics.calculator.TicketScoreCalculator;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

@@ -1,4 +1,15 @@
 package com.shishir.ticketmetrics.model;
 
-public class Rating {
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
+public record Rating(
+    Integer id,
+    BigDecimal rating,
+    Integer ticketId,
+    Integer ratingCategoryId,
+    Integer reviewerId,
+    Integer revieweeId,
+    OffsetDateTime createdAt
+) {
 }

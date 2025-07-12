@@ -1,4 +1,7 @@
 package com.shishir.ticketmetrics.model;
 
-public class User {
+public record User(
+    Integer id,
+    String name
+) {
 }
