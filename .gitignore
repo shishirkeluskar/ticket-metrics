@@ -63,3 +63,6 @@ out/
 
 ### MacOs files ###
 .DS_Store
+
+### Ignore Database ###
+src/main/resources/sqllite-db

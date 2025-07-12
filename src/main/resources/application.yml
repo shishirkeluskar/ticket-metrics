@@ -2,7 +2,7 @@ spring:
   application:
     name: ticket-metrics
   datasource:
-    url: jdbc:sqlite:src/main/resources/database.db
+    url: jdbc:sqlite:src/main/resources/sqllite-db/database.db
     driver-class-name: org.sqlite.JDBC
     
 mybatis:
