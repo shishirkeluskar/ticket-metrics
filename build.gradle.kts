@@ -28,10 +28,11 @@ repositories {
 dependencies {
     implementation("io.grpc:grpc-services")
     implementation("org.springframework.grpc:spring-grpc-spring-boot-starter")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:${property("mybatisSpringBootVersion")}")
     implementation("org.xerial:sqlite-jdbc:3.50.2.0")
 
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${property("mybatisSpringBootVersion")}")
     testImplementation("org.springframework.grpc:spring-grpc-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

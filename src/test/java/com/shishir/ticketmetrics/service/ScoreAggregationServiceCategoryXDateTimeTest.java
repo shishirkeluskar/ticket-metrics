@@ -14,7 +14,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-class ScoreAggregationServiceTest {
+class ScoreAggregationServiceCategoryXDateTimeTest {
   
   private RatingMapper ratingMapper;
   private ScoreAggregationService service;
