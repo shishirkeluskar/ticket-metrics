@@ -1,15 +1,23 @@
-package com.shishir.ticketmetrics.grpc;
+package com.shishir.ticketmetrics.integration.grpc;
 
+import com.shishir.ticketmetrics.grpc.PeriodOverPeriodRequest;
+import com.shishir.ticketmetrics.grpc.PeriodOverPeriodResponse;
+import com.shishir.ticketmetrics.grpc.TicketMetricsServiceGrpc;
+import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
+import org.springframework.test.context.jdbc.Sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@IntegrationTest
+@Sql(scripts = {"/sql/schema.sql", "/sql/data_period_comparison.sql"},
+    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class TicketMetricsGrpcPeriodOverPeriodIT {
   
   @LocalGrpcPort
@@ -28,7 +36,6 @@ class TicketMetricsGrpcPeriodOverPeriodIT {
   
   @Test
   void testGetPeriodOverPeriodScoreChange() {
-    // 👇 These dates must match existing DB values if using real db
     String currentStart = "2020-01-01T00:00:00";
     String currentEnd = "2020-01-31T00:00:00";
     
@@ -39,7 +46,6 @@ class TicketMetricsGrpcPeriodOverPeriodIT {
     
     PeriodOverPeriodResponse response = stub.getPeriodOverPeriodScoreChange(request);
     
-    // 👇 Basic validations (replace with known values if DB has data)
     assertThat(response.getCurrentPeriodScore()).isGreaterThanOrEqualTo(0);
     assertThat(response.getPreviousPeriodScore()).isGreaterThanOrEqualTo(0);
   }

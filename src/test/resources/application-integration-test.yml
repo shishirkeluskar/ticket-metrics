@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:file:memdb?mode=memory&cache=shared
+    driver-class-name: org.sqlite.JDBC
+    initialization-mode: always
+    schema: classpath:sql/schema.sql
+
+grpc:
+  server:
+    port: 0  # Use dynamic port in tests

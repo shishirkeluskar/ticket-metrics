@@ -1,7 +1,9 @@
-package com.shishir.ticketmetrics.service;
+package com.shishir.ticketmetrics.unit.service;
 
 import com.shishir.ticketmetrics.mapper.RatingMapper;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
+import com.shishir.ticketmetrics.service.ScoreAggregationService;
+import com.shishir.ticketmetrics.testsupport.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@UnitTest
 class ScoreAggregationServicePeriodOverPeriodTest {
   
   private RatingMapper ratingMapper;

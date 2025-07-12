@@ -1,5 +1,10 @@
-package com.shishir.ticketmetrics.grpc;
+package com.shishir.ticketmetrics.integration.grpc;
 
+import com.shishir.ticketmetrics.grpc.TicketMetricsServiceGrpc;
+import com.shishir.ticketmetrics.grpc.TicketScoreRequest;
+import com.shishir.ticketmetrics.grpc.TicketScoreResponse;
+import com.shishir.ticketmetrics.grpc.TicketScoreRow;
+import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -7,10 +12,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
+import org.springframework.test.context.jdbc.Sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@IntegrationTest
+@Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_matrix.sql"},
+    executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class TicketMetricsGrpcTicketScoresIT {
   @LocalGrpcPort
   int port;
@@ -34,8 +43,8 @@ public class TicketMetricsGrpcTicketScoresIT {
   @Test
   void testGetTicketScores() {
     TicketScoreRequest request = TicketScoreRequest.newBuilder()
-        .setStart("2019-03-01T00:00:00")
-        .setEnd("2019-03-31T00:00:00")
+        .setStart("2025-07-01T00:00:00")
+        .setEnd("2025-07-02T00:00:00")
         .build();
     
     TicketScoreResponse response = stub.getTicketScores(request);
