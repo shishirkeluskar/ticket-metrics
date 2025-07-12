@@ -106,6 +106,28 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     }
   }
   
+  @Override
+  public void getOverallScore(OverallScoreRequest request, StreamObserver<OverallScoreResponse> responseObserver) {
+    try {
+      LocalDateTime start = LocalDateTime.parse(request.getStart());
+      LocalDateTime end = LocalDateTime.parse(request.getEnd());
+      
+      BigDecimal overallScore = scoreAggregationService.getOverallScore(start, end);
+      
+      OverallScoreResponse response = OverallScoreResponse.newBuilder()
+          .setOverallScore(overallScore.doubleValue())
+          .build();
+      
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+      
+    } catch (DateTimeParseException ex) {
+      responseObserver.onError(new IllegalArgumentException("Invalid date format. Use ISO-8601 format."));
+    } catch (Exception ex) {
+      responseObserver.onError(ex);
+    }
+  }
+  
   private LocalDateTime toLocalDateTime(Timestamp ts) {
     return LocalDateTime.ofInstant(Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos()), ZoneOffset.UTC);
   }

@@ -60,6 +60,18 @@ message TicketScoreRow {
   map<int32, double> category_scores = 2; // key = categoryId, value = % score
 }
 
+// -------- 4. Request for overall quality score in a period --------
+
+message OverallScoreRequest {
+  string start = 1; // ISO-8601 datetime string
+  string end = 2;
+}
+
+// Response with overall score percentage
+message OverallScoreResponse {
+  double overall_score = 1;
+}
+
 
 // -------- gRPC Service --------
 
@@ -67,4 +79,5 @@ service TicketMetricsService {
   rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
   rpc GetCategoryScoreOverTime (CategoryScoreRequest) returns (CategoryScoreResponse);
   rpc GetTicketScores (TicketScoreRequest) returns (TicketScoreResponse);
+  rpc GetOverallScore(OverallScoreRequest) returns (OverallScoreResponse);
 }

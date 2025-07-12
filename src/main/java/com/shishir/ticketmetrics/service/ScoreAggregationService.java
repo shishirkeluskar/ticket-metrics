@@ -150,6 +150,28 @@ public class ScoreAggregationService {
     return result;
   }
   
+  public BigDecimal getOverallScore(LocalDateTime start, LocalDateTime end) {
+    // Fetch all ratings weighted by category weights between dates
+    List<RatingWithCategoryWeight> ratings = ratingMapper.findRatingsCreatedBetween(start, end);
+    
+    BigDecimal weightedSum = BigDecimal.ZERO;
+    BigDecimal totalWeight = BigDecimal.ZERO;
+    BigDecimal maxRating = BigDecimal.valueOf(5);
+    
+    for (RatingWithCategoryWeight rating : ratings) {
+      BigDecimal weightedRating = rating.rating().multiply(rating.weight());
+      weightedSum = weightedSum.add(weightedRating);
+      totalWeight = totalWeight.add(rating.weight().multiply(maxRating));
+    }
+    
+    if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
+      return BigDecimal.ZERO;
+    }
+    
+    // Calculate percentage score
+    return weightedSum.multiply(BigDecimal.valueOf(100)).divide(totalWeight, 2, RoundingMode.HALF_UP);
+  }
+  
   private LocalDateTime toBucketDate(LocalDateTime ts, TimeBucket bucket) {
     if (bucket == TimeBucket.DAILY) {
       return ts.toLocalDate().atStartOfDay();

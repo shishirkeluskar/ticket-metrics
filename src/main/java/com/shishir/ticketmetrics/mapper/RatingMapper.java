@@ -76,4 +76,18 @@ public interface RatingMapper {
       @Param("categoryId") int categoryId,
       @Param("start") LocalDateTime start,
       @Param("end") LocalDateTime end);
+  
+  @Select("""
+      SELECT
+              r.ticket_id,
+              r.rating_category_id AS category_id,
+              r.rating,
+              rc.weight,
+              t.created_at AS ticket_created_at
+          FROM ratings r
+          JOIN rating_categories rc ON r.rating_category_id = rc.id
+          JOIN tickets t ON r.ticket_id = t.id
+          WHERE t.created_at BETWEEN #{start} AND #{end}
+      """)
+  List<RatingWithCategoryWeight> findRatingsCreatedBetween(LocalDateTime start, LocalDateTime end);
 }
