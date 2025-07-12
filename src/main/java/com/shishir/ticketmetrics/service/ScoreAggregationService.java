@@ -24,6 +24,33 @@ public class ScoreAggregationService {
     this.ratingMapper = ratingMapper;
   }
   
+  /**
+   * Calculates average percentage scores for each rating category within a time period.
+   *
+   * <p>Each rating contributes to its category's score for the day/week it was created.
+   * For longer periods (> 1 month), scores are bucketed by week; otherwise by day.
+   *
+   * <p><b>Important:</b> Aggregation is based on <code>ratings.created_at</code>,
+   * not <code>tickets.created_at</code>, because feedback is timestamped at rating time.
+   *
+   * <p>Example 1 (Daily):
+   * <ul>
+   *   <li>Rating A: 4 stars on 2025-07-01 → contributes to July 1</li>
+   *   <li>Rating B: 2 stars on 2025-07-01 → also July 1</li>
+   * </ul>
+   * → Result: (4 + 2) / (5 + 5) = 60%
+   *
+   * <p>Example 2 (Weekly):
+   * <ul>
+   *   <li>Rating C: 5 stars on 2025-07-02</li>
+   *   <li>Rating D: 0 stars on 2025-07-05</li>
+   * </ul>
+   * → Result for Week 1 of July: (5 + 0) / (5 + 5) = 50%
+   *
+   * @param startDate start of time range (inclusive)
+   * @param endDate   end of time range (inclusive)
+   * @return map from category ID to summary of score, timeline and count
+   */
   public Map<Integer, CategoryScoreSummary> getCategoryScores(LocalDateTime startDate, LocalDateTime endDate) {
     TimeBucket bucket = TimeBucketResolver.resolve(startDate, endDate);
     

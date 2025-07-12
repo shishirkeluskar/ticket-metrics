@@ -56,6 +56,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
           .setTotalRatings(summary.getTotalRatings())
           .setAverageScore(summary.getFinalAverageScore().doubleValue());
       
+      // Aggregate scores based on rating creation date
       summary.getDateScores().forEach((dateTime, score) -> {
         categoryScoreBuilder.addTimeline(
             ScoreByDate.newBuilder()
