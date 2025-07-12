@@ -7,10 +7,12 @@ import com.shishir.ticketmetrics.service.TicketScoringService;
 import io.grpc.stub.StreamObserver;
 import org.springframework.grpc.server.service.GrpcService;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 
 @GrpcService
@@ -71,6 +73,37 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     
     responseObserver.onNext(responseBuilder.build());
     responseObserver.onCompleted();
+  }
+  
+  @Override
+  public void getTicketScores(TicketScoreRequest request, StreamObserver<TicketScoreResponse> responseObserver) {
+    try {
+      LocalDateTime start = LocalDateTime.parse(request.getStart());
+      LocalDateTime end = LocalDateTime.parse(request.getEnd());
+      
+      Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = scoreAggregationService.getScoresByTicket(start, end);
+      
+      TicketScoreResponse.Builder responseBuilder = TicketScoreResponse.newBuilder();
+      
+      for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
+        TicketScoreRow.Builder ticketScoreRowBuilder = TicketScoreRow.newBuilder();
+        ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
+        
+        for (Map.Entry<Integer, BigDecimal> categoryEntry : ticketEntry.getValue().entrySet()) {
+          ticketScoreRowBuilder.putCategoryScores(categoryEntry.getKey(), categoryEntry.getValue().doubleValue());
+        }
+        
+        responseBuilder.addTicketScores(ticketScoreRowBuilder);
+      }
+      
+      responseObserver.onNext(responseBuilder.build());
+      responseObserver.onCompleted();
+      
+    } catch (DateTimeParseException ex) {
+      responseObserver.onError(new IllegalArgumentException("Invalid date format. Use ISO-8601 format."));
+    } catch (Exception ex) {
+      responseObserver.onError(ex);
+    }
   }
   
   private LocalDateTime toLocalDateTime(Timestamp ts) {
