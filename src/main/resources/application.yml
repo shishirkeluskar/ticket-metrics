@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: ticket-metrics
+  datasource:
+    url: jdbc:sqlite:src/main/resources/database.db
+    driver-class-name: org.sqlite.JDBC
+    
+mybatis:
+  type-aliases-package: com.shishir.ticketmetrics.mapper
+  configuration:
+    map-underscore-to-camel-case: true
