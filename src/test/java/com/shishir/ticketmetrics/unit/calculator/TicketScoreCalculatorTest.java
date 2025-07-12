@@ -1,5 +1,7 @@
-package com.shishir.ticketmetrics.calculator;
+package com.shishir.ticketmetrics.unit.calculator;
 
+import com.shishir.ticketmetrics.calculator.TicketScoreCalculator;
+import com.shishir.ticketmetrics.testsupport.UnitTest;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -7,6 +9,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@UnitTest
 public class TicketScoreCalculatorTest {
   
   @Test

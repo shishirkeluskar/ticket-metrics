@@ -1,14 +1,15 @@
-package com.shishir.ticketmetrics.service;
+package com.shishir.ticketmetrics.unit.service;
 
 import com.shishir.ticketmetrics.mapper.RatingMapper;
 import com.shishir.ticketmetrics.model.Rating;
+import com.shishir.ticketmetrics.service.RatingCategoryService;
+import com.shishir.ticketmetrics.service.TicketScoringService;
+import com.shishir.ticketmetrics.testsupport.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@UnitTest
 class TicketScoringServiceTest {
   
   private RatingMapper ratingMapper;

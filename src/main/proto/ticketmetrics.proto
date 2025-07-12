@@ -72,6 +72,19 @@ message OverallScoreResponse {
   double overall_score = 1;
 }
 
+// -------- 5. Request for period-over-period score change --------
+message PeriodOverPeriodRequest {
+  string current_start = 1; // ISO-8601 datetime string
+  string current_end = 2;
+}
+
+// Response containing scores for current and previous periods and their difference
+message PeriodOverPeriodResponse {
+  double current_period_score = 1;
+  double previous_period_score = 2;
+  double score_change = 3; // current - previous in percentage points
+}
+
 
 // -------- gRPC Service --------
 
@@ -80,4 +93,5 @@ service TicketMetricsService {
   rpc GetCategoryScoreOverTime (CategoryScoreRequest) returns (CategoryScoreResponse);
   rpc GetTicketScores (TicketScoreRequest) returns (TicketScoreResponse);
   rpc GetOverallScore(OverallScoreRequest) returns (OverallScoreResponse);
+  rpc GetPeriodOverPeriodScoreChange(PeriodOverPeriodRequest) returns (PeriodOverPeriodResponse);
 }

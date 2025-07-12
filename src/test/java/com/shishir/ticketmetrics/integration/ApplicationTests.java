@@ -1,15 +1,14 @@
-package com.shishir.ticketmetrics;
+package com.shishir.ticketmetrics.integration;
 
+import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-
 @SpringBootTest
+@IntegrationTest
 class ApplicationTests {
   
   @Test
   void contextLoads() {
-    var list = List.of();
   }
 }
