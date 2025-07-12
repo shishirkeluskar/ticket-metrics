@@ -128,6 +128,31 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     }
   }
   
+  @Override
+  public void getPeriodOverPeriodScoreChange(PeriodOverPeriodRequest request,
+                                             StreamObserver<PeriodOverPeriodResponse> responseObserver) {
+    try {
+      LocalDateTime currentStart = LocalDateTime.parse(request.getCurrentStart());
+      LocalDateTime currentEnd = LocalDateTime.parse(request.getCurrentEnd());
+      
+      var change = scoreAggregationService.calculatePeriodOverPeriodChange(currentStart, currentEnd);
+      
+      PeriodOverPeriodResponse response = PeriodOverPeriodResponse.newBuilder()
+          .setCurrentPeriodScore(change.currentScore().doubleValue())
+          .setPreviousPeriodScore(change.previousScore().doubleValue())
+          .setScoreChange(change.change().doubleValue())
+          .build();
+      
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+      
+    } catch (DateTimeParseException ex) {
+      responseObserver.onError(new IllegalArgumentException("Invalid date format. Use ISO-8601 format."));
+    } catch (Exception ex) {
+      responseObserver.onError(ex);
+    }
+  }
+  
   private LocalDateTime toLocalDateTime(Timestamp ts) {
     return LocalDateTime.ofInstant(Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos()), ZoneOffset.UTC);
   }
