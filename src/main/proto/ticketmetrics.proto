@@ -77,10 +77,21 @@ message ScoreChangeResponse {
   double change = 3; // Positive or negative %
 }
 
+// -------- 4. Period-over-Period Comparison --------
+
+message GetTicketScoreRequest {
+  int32 ticket_id = 1;
+}
+
+message GetTicketScoreResponse {
+  double score = 1;
+}
+
 
 // -------- gRPC Service --------
 
 service TicketMetricsService {
+  rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
   rpc GetCategoryScores(CategoryScoresRequest) returns (CategoryScoresResponse);
   rpc GetTicketScores(TicketScoresRequest) returns (TicketScoresResponse);
   rpc GetOverallScore(OverallScoreRequest) returns (OverallScoreResponse);

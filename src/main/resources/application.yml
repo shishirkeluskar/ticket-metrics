@@ -9,3 +9,11 @@ mybatis:
   type-aliases-package: com.shishir.ticketmetrics.mapper
   configuration:
     map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: WARN
+    com.shishir.ticketmetrics: DEBUG
+#    org.mybatis: DEBUG
+#    jdbc.resultset: TRACE
+#    jdbc.sqlonly: DEBUG

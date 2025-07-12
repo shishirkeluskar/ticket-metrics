@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +59,7 @@ class TicketScoringServiceTest {
         categoryId,
         null,
         null,
-        OffsetDateTime.now()
+        LocalDateTime.now()
     );
     return r;
   }

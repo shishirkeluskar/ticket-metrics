@@ -1,10 +1,14 @@
 package com.shishir.ticketmetrics.calculator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
 public class TicketScoreCalculator {
+  private static final Logger LOG = LoggerFactory.getLogger(TicketScoreCalculator.class);
   private static final BigDecimal MIN_SCALE = new BigDecimal("0.0");
   private static final BigDecimal MAX_SCALE = new BigDecimal("5.0");
   private static final BigDecimal HUNDRED = new BigDecimal("100.0");
@@ -91,14 +95,18 @@ public class TicketScoreCalculator {
       totalWeight = totalWeight.add(weight);
     }
     
+    // Step 3: The final ticket score is calculated as the weighted average.
+    var score = 0.0;
     if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
-      return 0.0;
+      score = 0.0;
+    } else {
+      score = weightedScoreSum
+          .divide(totalWeight, 2, RoundingMode.HALF_UP)
+          .doubleValue();
     }
     
-    // Step 3: The final ticket score is calculated as the weighted average.
-    return weightedScoreSum
-        .divide(totalWeight, 2, RoundingMode.HALF_UP)
-        .doubleValue();
+    LOG.debug("Calculated score={} for rating={} and weights={}", score, categoryRatings, categoryWeights);
+    return score;
   }
   
   private static void validate(Integer categoryId, BigDecimal rating, Map<Integer, BigDecimal> categoryWeights) {

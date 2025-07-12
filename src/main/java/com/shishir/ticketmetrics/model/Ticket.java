@@ -1,11 +1,11 @@
 package com.shishir.ticketmetrics.model;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 public record Ticket(
     Integer id,
     String subject,
-    OffsetDateTime createdAt
+    LocalDateTime createdAt
 )
 {
 }

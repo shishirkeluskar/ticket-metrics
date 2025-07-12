@@ -3,6 +3,7 @@ package com.shishir.ticketmetrics.mapper;
 import com.shishir.ticketmetrics.model.Rating;
 import com.shishir.ticketmetrics.model.RatingCategory;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -10,14 +11,11 @@ import java.util.List;
 @Mapper
 public interface RatingMapper {
   @Select("""
-          SELECT id,
-                 ticket_id,
-                 rating_category_id,
-                 rating
+          SELECT *
           FROM ratings
           WHERE ticket_id = #{ticketId}
       """)
-  List<Rating> findRatingsByTicketId(Integer ticketId);
+  List<Rating> findRatingsByTicketId(@Param("ticketId") Integer ticketId);
   
   @Select("""
           SELECT id,

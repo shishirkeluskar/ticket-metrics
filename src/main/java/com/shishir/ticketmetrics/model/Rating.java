@@ -1,7 +1,7 @@
 package com.shishir.ticketmetrics.model;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 public record Rating(
     Integer id,
@@ -10,6 +10,6 @@ public record Rating(
     Integer ratingCategoryId,
     Integer reviewerId,
     Integer revieweeId,
-    OffsetDateTime createdAt
+    LocalDateTime createdAt
 ) {
 }
