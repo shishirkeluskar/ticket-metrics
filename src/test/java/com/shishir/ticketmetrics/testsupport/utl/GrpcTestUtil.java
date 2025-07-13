@@ -34,8 +34,8 @@ public class GrpcTestUtil {
   
   public static PeriodScoreComparisonRequest buildComparePeriodScoresRequest(String currentStartDate, String currentEndDate) {
     return PeriodScoreComparisonRequest.newBuilder()
-        .setCurrentStart(currentStartDate)
-        .setCurrentEnd(currentEndDate)
+        .setCurrentStartDate(currentStartDate)
+        .setCurrentEndDate(currentEndDate)
         .build();
   }
   
