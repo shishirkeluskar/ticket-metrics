@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.integration;
 
-import com.shishir.ticketmetrics.testsupport.IntegrationTest;
+import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

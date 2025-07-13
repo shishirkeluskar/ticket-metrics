@@ -4,7 +4,7 @@ import com.shishir.ticketmetrics.mapper.RatingMapper;
 import com.shishir.ticketmetrics.model.Rating;
 import com.shishir.ticketmetrics.service.RatingCategoryService;
 import com.shishir.ticketmetrics.service.TicketScoringService;
-import com.shishir.ticketmetrics.testsupport.UnitTest;
+import com.shishir.ticketmetrics.testsupport.annotation.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package com.shishir.ticketmetrics.testsupport;
+package com.shishir.ticketmetrics.testsupport.annotation;
 
 import org.junit.jupiter.api.Tag;
 import org.springframework.test.context.ActiveProfiles;

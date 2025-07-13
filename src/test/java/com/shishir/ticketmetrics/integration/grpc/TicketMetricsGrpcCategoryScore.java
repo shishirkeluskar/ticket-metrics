@@ -4,7 +4,7 @@ import com.shishir.ticketmetrics.generated.grpc.CategoryAggregateScore;
 import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineRequest;
 import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineResponse;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
-import com.shishir.ticketmetrics.testsupport.IntegrationTest;
+import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.AfterEach;
