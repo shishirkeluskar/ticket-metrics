@@ -48,7 +48,7 @@ public class GrpcValidationUtils {
     try {
       return LocalDateTime.parse(value, ISO_FORMATTER);
     } catch (DateTimeParseException e) {
-      throw statusInvalid("%s must be in ISO date-time format: %s", fieldName, value);
+      throw statusInvalid("%s must be in ISO date-time format but was %s", fieldName, value);
     }
   }
   

@@ -1,5 +1,7 @@
 package com.shishir.ticketmetrics.testsupport.utl;
 
+import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineRequest;
+import com.shishir.ticketmetrics.generated.grpc.GetTicketScoreRequest;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -17,5 +19,18 @@ public class GrpcTestUtil {
   
   public static TicketMetricsServiceGrpc.TicketMetricsServiceBlockingStub buildServiceStub(ManagedChannel channel) {
     return TicketMetricsServiceGrpc.newBlockingStub(channel);
+  }
+  
+  public static GetTicketScoreRequest buildGetTicketScoreRequest(int value) {
+    return GetTicketScoreRequest.newBuilder()
+        .setTicketId(value)
+        .build();
+  }
+  
+  public static CategoryTimelineRequest buildCategoryTimelineRequest(String startDate, String endDate) {
+    return CategoryTimelineRequest.newBuilder()
+        .setStartDate(startDate)
+        .setEndDate(endDate)
+        .build();
   }
 }

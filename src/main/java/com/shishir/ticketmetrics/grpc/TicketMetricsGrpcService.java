@@ -52,8 +52,8 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     try {
       validateCategoryTimelineRequest(request);
       
-      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "startDate");
-      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "endDate");
+      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
       Map<Integer, CategoryScoreSummary> scoreMap = timelineService.getCategoryScoresOverTime(startDate, endDate);
@@ -96,8 +96,8 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     try {
       validateTicketCategoryMatrixRequest(request);
       
-      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "startDate");
-      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "endDate");
+      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
       
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
@@ -131,8 +131,8 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     try {
       validateOverallQualityScoreRequest(request);
       
-      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "startDate");
-      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "endDate");
+      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
       
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
@@ -185,22 +185,22 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   private void validateGetTicketScoreRequest(GetTicketScoreRequest request) {
-    GrpcValidationUtils.validatePositive(request.getTicketId(), "ticketId");
+    GrpcValidationUtils.validatePositive(request.getTicketId(), "ticket_id");
   }
   
   private void validateCategoryTimelineRequest(CategoryTimelineRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "startDate");
-    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "endDate");
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
   private void validateTicketCategoryMatrixRequest(TicketCategoryMatrixRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "startDate");
-    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "endDate");
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
   private void validateOverallQualityScoreRequest(OverallQualityScoreRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "startDate");
-    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "endDate");
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
   private void validatePeriodScoreComparisonRequest(PeriodScoreComparisonRequest request) {
