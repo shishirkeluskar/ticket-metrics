@@ -21,24 +21,23 @@ message GetTicketScoreResponse {
 // -------- 2. Category Timeline --------
 
 message CategoryTimelineRequest {
-  string startDate = 1; // ISO 8601 string
-  string endDate = 2;
+  string start_date = 1; // ISO 8601 string
+  string end_date = 2;
 }
 
 message CategoryTimelineResponse {
-  repeated CategoryScore scores = 1;
+  repeated CategoryAggregateScore scores = 1;
 }
 
-message CategoryScore {
+message CategoryAggregateScore {
   int32 category_id = 1;
   int32 total_ratings = 2;
   double average_score = 3; // Overall average for the period
-  repeated ScoreByDate timeline = 4;
+  repeated CategoryScoreTimelineEntry timeline = 4;
 }
 
-message ScoreByDate {
-  //  google.protobuf.Timestamp date = 1;
-  string date = 1; // ISO 8601 UTC format
+message CategoryScoreTimelineEntry {
+  string timestamp = 1; // ISO 8601 UTC format
   double score = 2;
 }
 

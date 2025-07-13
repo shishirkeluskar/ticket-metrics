@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.generated.grpc.CategoryScore;
+import com.shishir.ticketmetrics.generated.grpc.CategoryAggregateScore;
 import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineRequest;
 import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineResponse;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
@@ -50,7 +50,7 @@ public class TicketMetricsGrpcCategoryScore {
     CategoryTimelineResponse response = stub.getCategoryTimelineScores(request);
     
     assertThat(response.getScoresList()).isNotEmpty();
-    for (CategoryScore score : response.getScoresList()) {
+    for (CategoryAggregateScore score : response.getScoresList()) {
       assertThat(score.getCategoryId()).isGreaterThan(0);
       assertThat(score.getAverageScore()).isBetween(0.0, 100.0);
     }

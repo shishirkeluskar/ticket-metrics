@@ -54,7 +54,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       int categoryId = entry.getKey();
       CategoryScoreSummary summary = entry.getValue();
       
-      CategoryScore.Builder categoryScoreBuilder = CategoryScore.newBuilder()
+      CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
           .setCategoryId(categoryId)
           .setTotalRatings(summary.getTotalRatings())
           .setAverageScore(summary.getFinalAverageScore().doubleValue());
@@ -62,8 +62,8 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       // Aggregate scores based on rating creation date
       summary.getDateScores().forEach((dateTime, score) -> {
         categoryScoreBuilder.addTimeline(
-            ScoreByDate.newBuilder()
-                .setDate(fromLocalDateTimetoString(dateTime))
+            CategoryScoreTimelineEntry.newBuilder()
+                .setTimestamp(fromLocalDateTimetoString(dateTime))
                 .setScore(score.doubleValue())
                 .build()
         );
