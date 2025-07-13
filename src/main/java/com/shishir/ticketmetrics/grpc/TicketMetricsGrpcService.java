@@ -42,13 +42,13 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getCategoryTimelineScores(CategoryScoreRequest request, StreamObserver<CategoryScoreResponse> responseObserver) {
+  public void getCategoryTimelineScores(CategoryTimelineRequest request, StreamObserver<CategoryTimelineResponse> responseObserver) {
     LocalDateTime start = toLocalDateTime(request.getStartDate());
     LocalDateTime end = toLocalDateTime(request.getEndDate());
     
     Map<Integer, CategoryScoreSummary> scoreMap = scoreAggregationService.getCategoryScores(start, end);
     
-    CategoryScoreResponse.Builder responseBuilder = CategoryScoreResponse.newBuilder();
+    CategoryTimelineResponse.Builder responseBuilder = CategoryTimelineResponse.newBuilder();
     
     for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
       int categoryId = entry.getKey();
@@ -131,7 +131,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   
   @Override
   public void comparePeriodScores(PeriodOverPeriodRequest request,
-                                             StreamObserver<PeriodOverPeriodResponse> responseObserver) {
+                                  StreamObserver<PeriodOverPeriodResponse> responseObserver) {
     try {
       LocalDateTime currentStart = LocalDateTime.parse(request.getCurrentStart());
       LocalDateTime currentEnd = LocalDateTime.parse(request.getCurrentEnd());

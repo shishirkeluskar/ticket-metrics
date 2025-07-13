@@ -1,8 +1,8 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
 import com.shishir.ticketmetrics.generated.grpc.CategoryScore;
-import com.shishir.ticketmetrics.generated.grpc.CategoryScoreRequest;
-import com.shishir.ticketmetrics.generated.grpc.CategoryScoreResponse;
+import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineRequest;
+import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineResponse;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
@@ -42,12 +42,12 @@ public class TicketMetricsGrpcCategoryScore {
   
   @Test
   void testGetCategoryScoreOverTime() {
-    CategoryScoreRequest request = CategoryScoreRequest.newBuilder()
+    CategoryTimelineRequest request = CategoryTimelineRequest.newBuilder()
         .setStartDate("2025-07-02T00:00:00")
         .setEndDate("2025-07-04T00:00:00")
         .build();
     
-    CategoryScoreResponse response = stub.getCategoryTimelineScores(request);
+    CategoryTimelineResponse response = stub.getCategoryTimelineScores(request);
     
     assertThat(response.getScoresList()).isNotEmpty();
     for (CategoryScore score : response.getScoresList()) {

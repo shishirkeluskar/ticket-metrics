@@ -18,16 +18,14 @@ message GetTicketScoreResponse {
   double score = 1;
 }
 
-// -------- 2. Category Scores Over Time --------
+// -------- 2. Category Timeline --------
 
-message CategoryScoreRequest {
-  //  google.protobuf.Timestamp start = 1;
-  //  google.protobuf.Timestamp end = 2;
+message CategoryTimelineRequest {
   string startDate = 1; // ISO 8601 string
   string endDate = 2;
 }
 
-message CategoryScoreResponse {
+message CategoryTimelineResponse {
   repeated CategoryScore scores = 1;
 }
 
@@ -90,7 +88,7 @@ message PeriodOverPeriodResponse {
 
 service TicketMetricsService {
   rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
-  rpc GetCategoryTimelineScores (CategoryScoreRequest) returns (CategoryScoreResponse);
+  rpc GetCategoryTimelineScores (CategoryTimelineRequest) returns (CategoryTimelineResponse);
   rpc GetTicketCategoryMatrix (TicketScoreRequest) returns (TicketScoreResponse);
   rpc GetOverallQualityScore(OverallScoreRequest) returns (OverallScoreResponse);
   rpc ComparePeriodScores(PeriodOverPeriodRequest) returns (PeriodOverPeriodResponse);
