@@ -1,8 +1,8 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
 
-import com.shishir.ticketmetrics.generated.grpc.PeriodOverPeriodRequest;
-import com.shishir.ticketmetrics.generated.grpc.PeriodOverPeriodResponse;
+import com.shishir.ticketmetrics.generated.grpc.PeriodScoreComparisonRequest;
+import com.shishir.ticketmetrics.generated.grpc.PeriodScoreComparisonResponse;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
@@ -40,12 +40,12 @@ class TicketMetricsGrpcPeriodOverPeriod {
     String currentStart = "2020-01-01T00:00:00";
     String currentEnd = "2020-01-31T00:00:00";
     
-    PeriodOverPeriodRequest request = PeriodOverPeriodRequest.newBuilder()
+    PeriodScoreComparisonRequest request = PeriodScoreComparisonRequest.newBuilder()
         .setCurrentStart(currentStart)
         .setCurrentEnd(currentEnd)
         .build();
     
-    PeriodOverPeriodResponse response = stub.comparePeriodScores(request);
+    PeriodScoreComparisonResponse response = stub.comparePeriodScores(request);
     
     assertThat(response.getCurrentPeriodScore()).isGreaterThanOrEqualTo(0);
     assertThat(response.getPreviousPeriodScore()).isGreaterThanOrEqualTo(0);

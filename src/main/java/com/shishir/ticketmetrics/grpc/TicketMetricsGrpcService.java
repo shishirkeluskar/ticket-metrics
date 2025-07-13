@@ -108,15 +108,15 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getOverallQualityScore(OverallScoreRequest request, StreamObserver<OverallScoreResponse> responseObserver) {
+  public void getOverallQualityScore(OverallQualityScoreRequest request, StreamObserver<OverallQualityScoreResponse> responseObserver) {
     try {
-      LocalDateTime start = LocalDateTime.parse(request.getStart());
-      LocalDateTime end = LocalDateTime.parse(request.getEnd());
+      LocalDateTime start = LocalDateTime.parse(request.getStartDate());
+      LocalDateTime end = LocalDateTime.parse(request.getEndDate());
       
       BigDecimal overallScore = scoreAggregationService.getOverallScore(start, end);
       
-      OverallScoreResponse response = OverallScoreResponse.newBuilder()
-          .setOverallScore(overallScore.doubleValue())
+      OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
+          .setScore(overallScore.doubleValue())
           .build();
       
       responseObserver.onNext(response);
@@ -130,15 +130,15 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void comparePeriodScores(PeriodOverPeriodRequest request,
-                                  StreamObserver<PeriodOverPeriodResponse> responseObserver) {
+  public void comparePeriodScores(PeriodScoreComparisonRequest request,
+                                  StreamObserver<PeriodScoreComparisonResponse> responseObserver) {
     try {
       LocalDateTime currentStart = LocalDateTime.parse(request.getCurrentStart());
       LocalDateTime currentEnd = LocalDateTime.parse(request.getCurrentEnd());
       
       var change = scoreAggregationService.calculatePeriodOverPeriodChange(currentStart, currentEnd);
       
-      PeriodOverPeriodResponse response = PeriodOverPeriodResponse.newBuilder()
+      PeriodScoreComparisonResponse response = PeriodScoreComparisonResponse.newBuilder()
           .setCurrentPeriodScore(change.currentScore().doubleValue())
           .setPreviousPeriodScore(change.previousScore().doubleValue())
           .setScoreChange(change.change().doubleValue())

@@ -58,26 +58,25 @@ message TicketCategoryScoreRow {
   map<int32, double> category_scores = 2; // key = categoryId, value = % score
 }
 
-// -------- 4. Request for overall quality score in a period --------
+// -------- 4. Overall Score --------
 
-message OverallScoreRequest {
-  string start = 1; // ISO-8601 datetime string
-  string end = 2;
+message OverallQualityScoreRequest {
+  string start_date = 1; // ISO-8601 datetime string
+  string end_date = 2;
 }
 
-// Response with overall score percentage
-message OverallScoreResponse {
-  double overall_score = 1;
+message OverallQualityScoreResponse {
+  double score = 1;
 }
 
-// -------- 5. Request for period-over-period score change --------
-message PeriodOverPeriodRequest {
+// -------- 5. Period Comparison --------
+
+message PeriodScoreComparisonRequest {
   string current_start = 1; // ISO-8601 datetime string
   string current_end = 2;
 }
 
-// Response containing scores for current and previous periods and their difference
-message PeriodOverPeriodResponse {
+message PeriodScoreComparisonResponse {
   double current_period_score = 1;
   double previous_period_score = 2;
   double score_change = 3; // current - previous in percentage points
@@ -90,6 +89,6 @@ service TicketMetricsService {
   rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
   rpc GetCategoryTimelineScores (CategoryTimelineRequest) returns (CategoryTimelineResponse);
   rpc GetTicketCategoryMatrix (TicketCategoryMatrixRequest) returns (TicketCategoryMatrixResponse);
-  rpc GetOverallQualityScore(OverallScoreRequest) returns (OverallScoreResponse);
-  rpc ComparePeriodScores(PeriodOverPeriodRequest) returns (PeriodOverPeriodResponse);
+  rpc GetOverallQualityScore(OverallQualityScoreRequest) returns (OverallQualityScoreResponse);
+  rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreComparisonResponse);
 }
