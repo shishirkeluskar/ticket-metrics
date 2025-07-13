@@ -3,6 +3,7 @@ package com.shishir.ticketmetrics.grpc;
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
+import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoringService;
 import io.grpc.Status;
@@ -19,11 +20,13 @@ import java.util.Map;
 public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMetricsServiceImplBase {
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
   private final TicketScoringService ticketScoringService;
+  private final OverallScoreService overallScoreService;
   private final ScoreAggregationService timelineService;
   
   
-  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, ScoreAggregationService timelineService) {
+  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
     this.ticketScoringService = ticketScoreService;
+    this.overallScoreService = overallScoreService;
     this.timelineService = timelineService;
   }
   
@@ -136,7 +139,8 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
-      BigDecimal overallScore = timelineService.getOverallScore(startDate, endDate);
+      //BigDecimal overallScore = timelineService.getOverallScore(startDate, endDate);
+      BigDecimal overallScore = overallScoreService.getOverallScore(startDate.toLocalDate(), endDate.toLocalDate());
       
       OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
           .setScore(overallScore.doubleValue())
