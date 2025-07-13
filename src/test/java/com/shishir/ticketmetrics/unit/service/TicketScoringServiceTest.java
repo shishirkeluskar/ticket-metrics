@@ -2,7 +2,6 @@ package com.shishir.ticketmetrics.unit.service;
 
 import com.shishir.ticketmetrics.mapper.RatingMapper;
 import com.shishir.ticketmetrics.model.Rating;
-import com.shishir.ticketmetrics.service.RatingCategoryService;
 import com.shishir.ticketmetrics.service.TicketScoringService;
 import com.shishir.ticketmetrics.testsupport.annotation.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,14 +20,12 @@ import static org.mockito.Mockito.when;
 class TicketScoringServiceTest {
   
   private RatingMapper ratingMapper;
-  private RatingCategoryService categoryService;
   private TicketScoringService scoringService;
   
   @BeforeEach
   void setup() {
     ratingMapper = mock(RatingMapper.class);
-    categoryService = mock(RatingCategoryService.class);
-    scoringService = new TicketScoringService(ratingMapper, categoryService);
+    scoringService = new TicketScoringService(ratingMapper);
   }
   
   @Test
@@ -45,8 +42,8 @@ class TicketScoringServiceTest {
         2, BigDecimal.valueOf(3)
     );
     
-    when(ratingMapper.findRatingsByTicketId(ticketId)).thenReturn(ratings);
-    when(categoryService.getCategoryWeightMap()).thenReturn(weights);
+    when(ratingMapper.fetchRatingsByTicketId(ticketId)).thenReturn(ratings);
+    when(ratingMapper.getCategoryWeightMap()).thenReturn(weights);
     
     double score = scoringService.computeScore(ticketId);
     

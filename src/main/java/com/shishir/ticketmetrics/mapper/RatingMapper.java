@@ -7,9 +7,13 @@ import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.cache.annotation.Cacheable;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Mapper
 public interface RatingMapper {
@@ -18,7 +22,7 @@ public interface RatingMapper {
           FROM ratings
           WHERE ticket_id = #{ticketId}
       """)
-  List<Rating> findRatingsByTicketId(@Param("ticketId") Integer ticketId);
+  List<Rating> fetchRatingsByTicketId(@Param("ticketId") Integer ticketId);
   
   @Select("""
           SELECT id,
@@ -26,7 +30,8 @@ public interface RatingMapper {
                  weight
           FROM rating_categories
       """)
-  List<RatingCategory> findAllRatingCategories();
+  @Cacheable("ratingCategories")
+  List<RatingCategory> fetchRatingCategories();
   
   @Select("""
           SELECT r.rating_category_id AS category_id,
@@ -90,4 +95,18 @@ public interface RatingMapper {
           WHERE t.created_at BETWEEN #{start} AND #{end}
       """)
   List<RatingWithCategoryWeight> findRatingsCreatedBetween(LocalDateTime start, LocalDateTime end);
+  
+  /**
+   * Returns categoryId -> weight map.
+   * This is cached because weights change rarely.
+   */
+  @Cacheable("categoryWeightMapById")
+  default Map<Integer, BigDecimal> getCategoryWeightMap() {
+    return fetchRatingCategories()
+        .stream()
+        .collect(Collectors.toMap(
+            RatingCategory::id,
+            RatingCategory::weight
+        ));
+  }
 }

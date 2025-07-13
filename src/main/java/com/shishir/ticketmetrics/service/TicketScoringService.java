@@ -16,11 +16,9 @@ public class TicketScoringService {
   
   private static final Logger LOG = LoggerFactory.getLogger(TicketScoringService.class);
   private final RatingMapper ratingMapper;
-  private final RatingCategoryService ratingCategoryService;
   
-  public TicketScoringService(RatingMapper ratingMapper, RatingCategoryService ratingCategoryService) {
+  public TicketScoringService(RatingMapper ratingMapper) {
     this.ratingMapper = ratingMapper;
-    this.ratingCategoryService = ratingCategoryService;
   }
   
   /**
@@ -33,9 +31,9 @@ public class TicketScoringService {
   public double computeScore(Integer ticketId) {
     LOG.debug("Calculating score for ticketId={}", ticketId);
     
-    List<Rating> ratings = ratingMapper.findRatingsByTicketId(ticketId);
+    List<Rating> ratings = ratingMapper.fetchRatingsByTicketId(ticketId);
     var ratingMap = ratings.stream().collect(Collectors.toMap(Rating::ratingCategoryId, Rating::rating));
-    var weightMap = ratingCategoryService.getCategoryWeightMap();
+    var weightMap = ratingMapper.getCategoryWeightMap();
     var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap);
     
     LOG.debug("Calculated score={} for ticketId={}", score, ticketId);
