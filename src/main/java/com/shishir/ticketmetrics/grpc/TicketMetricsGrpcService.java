@@ -1,6 +1,7 @@
 package com.shishir.ticketmetrics.grpc;
 
 import com.google.protobuf.Timestamp;
+import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoringService;

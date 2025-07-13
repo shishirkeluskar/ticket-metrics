@@ -1,8 +1,9 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.grpc.GetTicketScoreRequest;
-import com.shishir.ticketmetrics.grpc.GetTicketScoreResponse;
-import com.shishir.ticketmetrics.grpc.TicketMetricsServiceGrpc;
+import com.shishir.ticketmetrics.generated.grpc.CategoryScore;
+import com.shishir.ticketmetrics.generated.grpc.CategoryScoreRequest;
+import com.shishir.ticketmetrics.generated.grpc.CategoryScoreResponse;
+import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -17,10 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_score.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/data_category_timeline.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-class TicketMetricsGrpcTicketScoreIT {
-  
+public class TicketMetricsGrpcCategoryScore {
   @LocalGrpcPort
   int port;
   
@@ -41,14 +41,18 @@ class TicketMetricsGrpcTicketScoreIT {
   }
   
   @Test
-  void testGetTicketScore_returnsScore() {
-    GetTicketScoreRequest request = GetTicketScoreRequest.newBuilder()
-        .setTicketId(1)
+  void testGetCategoryScoreOverTime() {
+    CategoryScoreRequest request = CategoryScoreRequest.newBuilder()
+        .setStartDate("2025-07-02T00:00:00")
+        .setEndDate("2025-07-04T00:00:00")
         .build();
     
-    GetTicketScoreResponse response = stub.getTicketScore(request);
+    CategoryScoreResponse response = stub.getCategoryScoreOverTime(request);
     
-    assertThat(response.getScore()).isBetween(0.0, 100.0);
+    assertThat(response.getScoresList()).isNotEmpty();
+    for (CategoryScore score : response.getScoresList()) {
+      assertThat(score.getCategoryId()).isGreaterThan(0);
+      assertThat(score.getAverageScore()).isBetween(0.0, 100.0);
+    }
   }
 }
-

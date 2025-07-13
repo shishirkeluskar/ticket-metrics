@@ -3,7 +3,7 @@ syntax = "proto3";
 package ticketmetrics;
 
 option java_multiple_files = true;
-option java_package = "com.shishir.ticketmetrics.grpc";
+option java_package = "com.shishir.ticketmetrics.generated.grpc";
 option java_outer_classname = "TicketMetricsProto";
 
 import "google/protobuf/timestamp.proto";

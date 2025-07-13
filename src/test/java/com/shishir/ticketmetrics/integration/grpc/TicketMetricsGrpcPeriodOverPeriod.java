@@ -1,8 +1,9 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.grpc.PeriodOverPeriodRequest;
-import com.shishir.ticketmetrics.grpc.PeriodOverPeriodResponse;
-import com.shishir.ticketmetrics.grpc.TicketMetricsServiceGrpc;
+
+import com.shishir.ticketmetrics.generated.grpc.PeriodOverPeriodRequest;
+import com.shishir.ticketmetrics.generated.grpc.PeriodOverPeriodResponse;
+import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IntegrationTest
 @Sql(scripts = {"/sql/schema.sql", "/sql/data_period_comparison.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-class TicketMetricsGrpcPeriodOverPeriodIT {
+class TicketMetricsGrpcPeriodOverPeriod {
   
   @LocalGrpcPort
   private int port;
