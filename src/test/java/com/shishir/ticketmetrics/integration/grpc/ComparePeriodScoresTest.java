@@ -49,7 +49,12 @@ class ComparePeriodScoresTest {
   
   @Test
   void shouldFail_whenInvalidCurrentStartDate() {
-    var request = GrpcTestUtil.buildComparePeriodScoresRequest("incorrect-start-date", "2025-07-04T00:00:00");
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest(
+        "incorrect-start-date",
+        "2025-07-04T00:00:00",
+        "2025-06-04T00:00:00",
+        "2025-06-04T00:00:00"
+    );
     
     assertThatThrownBy(() -> grpcStub.comparePeriodScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -58,7 +63,12 @@ class ComparePeriodScoresTest {
   
   @Test
   void shouldFail_whenInvalidCurrentEndDate() {
-    var request = GrpcTestUtil.buildComparePeriodScoresRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest(
+        "2025-07-04T00:00:00",
+        "incorrect-end-date",
+        "2025-06-04T00:00:00",
+        "2025-06-04T00:00:00"
+    );
     
     assertThatThrownBy(() -> grpcStub.comparePeriodScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -67,7 +77,12 @@ class ComparePeriodScoresTest {
   
   @Test
   void shouldFail_whenInvalidDateOrder() {
-    var request = GrpcTestUtil.buildComparePeriodScoresRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest(
+        "2025-07-04T00:00:00",
+        "2025-06-04T00:00:00",
+        "2025-05-04T00:00:00",
+        "2025-04-04T00:00:00"
+    );
     
     assertThatThrownBy(() -> grpcStub.comparePeriodScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -78,8 +93,10 @@ class ComparePeriodScoresTest {
   void testGetPeriodOverPeriodScoreChange() {
     String currentStart = "2020-01-01T00:00:00";
     String currentEnd = "2020-01-31T00:00:00";
+    String previousStart = "2019-12-01T00:00:00";
+    String previousEnd = "2019-12-31T00:00:00";
     
-    var request = GrpcTestUtil.buildComparePeriodScoresRequest(currentStart, currentEnd);
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest(currentStart, currentEnd, previousStart, previousEnd);
     
     PeriodScoreComparisonResponse response = grpcStub.comparePeriodScores(request);
     

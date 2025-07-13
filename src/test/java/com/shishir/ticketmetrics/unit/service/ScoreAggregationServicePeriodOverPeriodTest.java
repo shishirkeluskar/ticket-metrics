@@ -47,7 +47,7 @@ class ScoreAggregationServicePeriodOverPeriodTest {
     when(ratingMapper.findRatingsCreatedBetween(eq(prevStart), eq(prevEnd)))
         .thenReturn(List.of(r2));
     
-    var result = service.calculatePeriodOverPeriodChange(currentStart, currentEnd);
+    var result = service.calculatePeriodOverPeriodChange(currentStart, currentEnd, prevStart, prevEnd);
     
     // Current: (4*2) / (2*5) * 100 = 80%
     // Previous: (3*2) / (2*5) * 100 = 60%
@@ -62,11 +62,13 @@ class ScoreAggregationServicePeriodOverPeriodTest {
   void testCalculatePeriodOverPeriodChange_withEmptyPeriods() {
     LocalDateTime currentStart = LocalDateTime.of(2025, 7, 7, 0, 0);
     LocalDateTime currentEnd = LocalDateTime.of(2025, 7, 14, 0, 0);
+    LocalDateTime prevStart = LocalDateTime.of(2025, 6, 7, 0, 0);
+    LocalDateTime prevEnd = LocalDateTime.of(2025, 6, 14, 0, 0);
     
     when(ratingMapper.findRatingsCreatedBetween(any(), any()))
         .thenReturn(List.of()); // both current and previous return empty
     
-    var result = service.calculatePeriodOverPeriodChange(currentStart, currentEnd);
+    var result = service.calculatePeriodOverPeriodChange(currentStart, currentEnd, prevStart, prevEnd);
     
     assertThat(result.currentScore()).isEqualByComparingTo(BigDecimal.ZERO);
     assertThat(result.previousScore()).isEqualByComparingTo(BigDecimal.ZERO);

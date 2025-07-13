@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -181,14 +182,15 @@ public class ScoreAggregationService {
    * @param currentEnd   end datetime of the current period (exclusive)
    * @return a Triple of (currentScore, previousScore, change)
    */
-  public PeriodScoreChange calculatePeriodOverPeriodChange(LocalDateTime currentStart, LocalDateTime currentEnd) {
-    // Calculate previous period based on current period duration
-    Duration periodDuration = Duration.between(currentStart, currentEnd);
-    LocalDateTime previousStart = currentStart.minus(periodDuration);
-    LocalDateTime previousEnd = currentStart;
+  public PeriodScoreChange calculatePeriodOverPeriodChange(
+      LocalDateTime currentStart,
+      LocalDateTime currentEnd,
+      LocalDateTime previousStartDate,
+      LocalDateTime previousEndDate
+  ) {
     
     BigDecimal currentScore = getOverallScore(currentStart, currentEnd);
-    BigDecimal previousScore = getOverallScore(previousStart, previousEnd);
+    BigDecimal previousScore = getOverallScore(previousStartDate, previousEndDate);
     
     BigDecimal change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
     

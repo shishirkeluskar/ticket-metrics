@@ -74,6 +74,8 @@ message OverallQualityScoreResponse {
 message PeriodScoreComparisonRequest {
   string current_start_date = 1; // ISO-8601 datetime string
   string current_end_date = 2;
+  string previous_start_date = 3;
+  string previous_end_date = 4;
 }
 
 message PeriodScoreComparisonResponse {
