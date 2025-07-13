@@ -1,9 +1,9 @@
 spring:
+  application:
+    name: ticket-metrics
   datasource:
-    url: jdbc:sqlite:file:memdb?mode=memory&cache=shared
+    url: jdbc:sqlite:src/test/resources/sqllite-db/test.db
     driver-class-name: org.sqlite.JDBC
-    initialization-mode: always
-    schema: classpath:sql/schema.sql
 
 grpc:
   server:
