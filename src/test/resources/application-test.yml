@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: ticket-metrics
+  datasource:
+    url: jdbc:sqlite:src/test/resources/sqllite-db/test.db
+    driver-class-name: org.sqlite.JDBC

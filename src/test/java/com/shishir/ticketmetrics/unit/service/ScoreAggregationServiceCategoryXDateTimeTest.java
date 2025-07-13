@@ -4,7 +4,7 @@ import com.shishir.ticketmetrics.mapper.RatingMapper;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
-import com.shishir.ticketmetrics.testsupport.UnitTest;
+import com.shishir.ticketmetrics.testsupport.annotation.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +41,7 @@ class ScoreAggregationServiceCategoryXDateTimeTest {
     
     when(ratingMapper.findRatingsInRange(any(), any())).thenReturn(ratings);
     
-    Map<Integer, CategoryScoreSummary> result = service.getCategoryScores(start, end);
+    Map<Integer, CategoryScoreSummary> result = service.getCategoryScoresOverTime(start, end);
     
     assertThat(result).hasSize(1);
     CategoryScoreSummary summary = result.get(1);

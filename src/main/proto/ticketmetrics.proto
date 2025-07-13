@@ -3,12 +3,12 @@ syntax = "proto3";
 package ticketmetrics;
 
 option java_multiple_files = true;
-option java_package = "com.shishir.ticketmetrics.grpc";
+option java_package = "com.shishir.ticketmetrics.generated.grpc";
 option java_outer_classname = "TicketMetricsProto";
 
 import "google/protobuf/timestamp.proto";
 
-// -------- 1. A ticket score --------
+// -------- 1. Ticket Score --------
 
 message GetTicketScoreRequest {
   int32 ticket_id = 1;
@@ -18,68 +18,65 @@ message GetTicketScoreResponse {
   double score = 1;
 }
 
-// -------- 2. Category Scores Over Time --------
+// -------- 2. Category Timeline --------
 
-message CategoryScoreRequest {
-  //  google.protobuf.Timestamp start = 1;
-  //  google.protobuf.Timestamp end = 2;
-  string startDate = 1; // ISO 8601 string
-  string endDate = 2;
+message CategoryTimelineRequest {
+  string start_date = 1; // ISO 8601 string
+  string end_date = 2;
 }
 
-message CategoryScoreResponse {
-  repeated CategoryScore scores = 1;
+message CategoryTimelineResponse {
+  repeated CategoryAggregateScore scores = 1;
 }
 
-message CategoryScore {
+message CategoryAggregateScore {
   int32 category_id = 1;
   int32 total_ratings = 2;
   double average_score = 3; // Overall average for the period
-  repeated ScoreByDate timeline = 4;
+  repeated CategoryScoreTimelineEntry timeline = 4;
 }
 
-message ScoreByDate {
-  //  google.protobuf.Timestamp date = 1;
-  string date = 1; // ISO 8601 UTC format
+message CategoryScoreTimelineEntry {
+  string timestamp = 1; // ISO 8601 UTC format
   double score = 2;
 }
 
 
-// -------- 3. Ticket/Category Scores Over Time --------
-message TicketScoreRequest {
-  string start = 1;
-  string end = 2;
+// -------- 3. Ticket/Category Matrix --------
+
+message TicketCategoryMatrixRequest {
+  string start_date = 1; // ISO 8601 UTC format
+  string end_date = 2;
 }
 
-message TicketScoreResponse {
-  repeated TicketScoreRow ticket_scores = 1;
+message TicketCategoryMatrixResponse {
+  repeated TicketCategoryScoreRow ticket_scores = 1;
 }
 
-message TicketScoreRow {
+message TicketCategoryScoreRow {
   int32 ticket_id = 1;
   map<int32, double> category_scores = 2; // key = categoryId, value = % score
 }
 
-// -------- 4. Request for overall quality score in a period --------
+// -------- 4. Overall Score --------
 
-message OverallScoreRequest {
-  string start = 1; // ISO-8601 datetime string
-  string end = 2;
+message OverallQualityScoreRequest {
+  string start_date = 1; // ISO-8601 datetime string
+  string end_date = 2;
 }
 
-// Response with overall score percentage
-message OverallScoreResponse {
-  double overall_score = 1;
+message OverallQualityScoreResponse {
+  double score = 1;
 }
 
-// -------- 5. Request for period-over-period score change --------
-message PeriodOverPeriodRequest {
-  string current_start = 1; // ISO-8601 datetime string
-  string current_end = 2;
+// -------- 5. Period Comparison --------
+
+message PeriodScoreComparisonRequest {
+  string current_start_date = 1; // ISO-8601 datetime string
+  string current_end_date = 2;
 }
 
-// Response containing scores for current and previous periods and their difference
-message PeriodOverPeriodResponse {
+message PeriodScoreComparisonResponse {
   double current_period_score = 1;
   double previous_period_score = 2;
   double score_change = 3; // current - previous in percentage points
@@ -90,8 +87,8 @@ message PeriodOverPeriodResponse {
 
 service TicketMetricsService {
   rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
-  rpc GetCategoryScoreOverTime (CategoryScoreRequest) returns (CategoryScoreResponse);
-  rpc GetTicketScores (TicketScoreRequest) returns (TicketScoreResponse);
-  rpc GetOverallScore(OverallScoreRequest) returns (OverallScoreResponse);
-  rpc GetPeriodOverPeriodScoreChange(PeriodOverPeriodRequest) returns (PeriodOverPeriodResponse);
+  rpc GetCategoryTimelineScores (CategoryTimelineRequest) returns (CategoryTimelineResponse);
+  rpc GetTicketCategoryMatrix (TicketCategoryMatrixRequest) returns (TicketCategoryMatrixResponse);
+  rpc GetOverallQualityScore(OverallQualityScoreRequest) returns (OverallQualityScoreResponse);
+  rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreComparisonResponse);
 }
