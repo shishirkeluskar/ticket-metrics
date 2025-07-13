@@ -112,7 +112,6 @@ public class TicketScoreCalculator {
   private static void validate(Integer categoryId, BigDecimal rating, Map<Integer, BigDecimal> categoryWeights) {
     requireRatingNotNull(categoryId, rating);
     requireRatingWithinBounds(categoryId, rating);
-    // requireWeightForCategory(categoryId, categoryWeights);
   }
   
   private static void requireRatingNotNull(Integer categoryId, BigDecimal rating) {
@@ -128,14 +127,6 @@ public class TicketScoreCalculator {
       throw new IllegalArgumentException(
           String.format("Rating=%d is out bounds for categoryId=%s. Bounds %s to %s."
               .formatted(rating, categoryId, MIN_SCALE, MAX_SCALE))
-      );
-    }
-  }
-  
-  private static void requireWeightForCategory(Integer categoryId, Map<Integer, BigDecimal> categoryWeights) {
-    if (!categoryWeights.containsKey(categoryId)) {
-      throw new IllegalArgumentException(
-          String.format("Missing weight for categoryId=%d".formatted(categoryId))
       );
     }
   }
