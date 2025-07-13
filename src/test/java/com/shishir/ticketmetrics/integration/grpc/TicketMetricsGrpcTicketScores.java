@@ -1,9 +1,9 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
+import com.shishir.ticketmetrics.generated.grpc.TicketCategoryMatrixRequest;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
-import com.shishir.ticketmetrics.generated.grpc.TicketScoreRequest;
-import com.shishir.ticketmetrics.generated.grpc.TicketScoreResponse;
-import com.shishir.ticketmetrics.generated.grpc.TicketScoreRow;
+import com.shishir.ticketmetrics.generated.grpc.TicketCategoryMatrixResponse;
+import com.shishir.ticketmetrics.generated.grpc.TicketCategoryScoreRow;
 import com.shishir.ticketmetrics.testsupport.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -42,15 +42,15 @@ public class TicketMetricsGrpcTicketScores {
   
   @Test
   void testGetTicketScores() {
-    TicketScoreRequest request = TicketScoreRequest.newBuilder()
-        .setStart("2025-07-01T00:00:00")
-        .setEnd("2025-07-02T00:00:00")
+    TicketCategoryMatrixRequest request = TicketCategoryMatrixRequest.newBuilder()
+        .setStartDate("2025-07-01T00:00:00")
+        .setEndDate("2025-07-02T00:00:00")
         .build();
     
-    TicketScoreResponse response = stub.getTicketCategoryMatrix(request);
+    TicketCategoryMatrixResponse response = stub.getTicketCategoryMatrix(request);
     
     assertThat(response.getTicketScoresList()).isNotEmpty();
-    for (TicketScoreRow row : response.getTicketScoresList()) {
+    for (TicketCategoryScoreRow row : response.getTicketScoresList()) {
       assertThat(row.getTicketId()).isGreaterThan(0);
       assertThat(row.getCategoryScoresMap()).isNotEmpty();
     }

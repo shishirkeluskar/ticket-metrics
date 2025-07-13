@@ -77,17 +77,17 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getTicketCategoryMatrix(TicketScoreRequest request, StreamObserver<TicketScoreResponse> responseObserver) {
+  public void getTicketCategoryMatrix(TicketCategoryMatrixRequest request, StreamObserver<TicketCategoryMatrixResponse> responseObserver) {
     try {
-      LocalDateTime start = LocalDateTime.parse(request.getStart());
-      LocalDateTime end = LocalDateTime.parse(request.getEnd());
+      LocalDateTime start = LocalDateTime.parse(request.getStartDate());
+      LocalDateTime end = LocalDateTime.parse(request.getEndDate());
       
       Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = scoreAggregationService.getScoresByTicket(start, end);
       
-      TicketScoreResponse.Builder responseBuilder = TicketScoreResponse.newBuilder();
+      TicketCategoryMatrixResponse.Builder responseBuilder = TicketCategoryMatrixResponse.newBuilder();
       
       for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
-        TicketScoreRow.Builder ticketScoreRowBuilder = TicketScoreRow.newBuilder();
+        TicketCategoryScoreRow.Builder ticketScoreRowBuilder = TicketCategoryScoreRow.newBuilder();
         ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
         
         for (Map.Entry<Integer, BigDecimal> categoryEntry : ticketEntry.getValue().entrySet()) {
