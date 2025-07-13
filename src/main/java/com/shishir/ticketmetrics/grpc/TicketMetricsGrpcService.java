@@ -1,88 +1,107 @@
 package com.shishir.ticketmetrics.grpc;
 
-import com.google.protobuf.Timestamp;
 import com.shishir.ticketmetrics.generated.grpc.*;
+import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoringService;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Map;
 
 @GrpcService
 public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMetricsServiceImplBase {
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
   private final TicketScoringService ticketScoringService;
-  private final ScoreAggregationService scoreAggregationService;
+  private final ScoreAggregationService timelineService;
   
   
-  public TicketMetricsGrpcService(TicketScoringService ticketScoringService, ScoreAggregationService scoreAggregationService) {
-    this.ticketScoringService = ticketScoringService;
-    this.scoreAggregationService = scoreAggregationService;
+  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, ScoreAggregationService timelineService) {
+    this.ticketScoringService = ticketScoreService;
+    this.timelineService = timelineService;
   }
   
   @Override
   public void getTicketScore(GetTicketScoreRequest request, StreamObserver<GetTicketScoreResponse> responseObserver) {
-    int ticketId = request.getTicketId();
-    double score = ticketScoringService.computeScore(ticketId);
-    
-    var response = GetTicketScoreResponse.newBuilder()
-        .setScore(score)
-        .build();
-    
-    responseObserver.onNext(response);
-    responseObserver.onCompleted();
+    try {
+      validateGetTicketScoreRequest(request);
+      double score = ticketScoringService.computeScore(request.getTicketId());
+      
+      var response = GetTicketScoreResponse.newBuilder()
+          .setScore(score)
+          .build();
+      
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+      
+    } catch (StatusRuntimeException e) {
+      responseObserver.onError(e);
+    } catch (Exception e) {
+      responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
+    }
   }
   
   @Override
   public void getCategoryTimelineScores(CategoryTimelineRequest request, StreamObserver<CategoryTimelineResponse> responseObserver) {
-    LocalDateTime start = toLocalDateTime(request.getStartDate());
-    LocalDateTime end = toLocalDateTime(request.getEndDate());
-    
-    Map<Integer, CategoryScoreSummary> scoreMap = scoreAggregationService.getCategoryScores(start, end);
-    
-    CategoryTimelineResponse.Builder responseBuilder = CategoryTimelineResponse.newBuilder();
-    
-    for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
-      int categoryId = entry.getKey();
-      CategoryScoreSummary summary = entry.getValue();
+    try {
+      validateCategoryTimelineRequest(request);
       
-      CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
-          .setCategoryId(categoryId)
-          .setTotalRatings(summary.getTotalRatings())
-          .setAverageScore(summary.getFinalAverageScore().doubleValue());
+      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "startDate");
+      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "endDate");
+      GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
-      // Aggregate scores based on rating creation date
-      summary.getDateScores().forEach((dateTime, score) -> {
-        categoryScoreBuilder.addTimeline(
-            CategoryScoreTimelineEntry.newBuilder()
-                .setTimestamp(fromLocalDateTimetoString(dateTime))
-                .setScore(score.doubleValue())
-                .build()
-        );
-      });
+      Map<Integer, CategoryScoreSummary> scoreMap = timelineService.getCategoryScoresOverTime(startDate, endDate);
       
-      responseBuilder.addScores(categoryScoreBuilder.build());
+      CategoryTimelineResponse.Builder responseBuilder = CategoryTimelineResponse.newBuilder();
+      
+      for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
+        int categoryId = entry.getKey();
+        CategoryScoreSummary summary = entry.getValue();
+        
+        CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
+            .setCategoryId(categoryId)
+            .setTotalRatings(summary.getTotalRatings())
+            .setAverageScore(summary.getFinalAverageScore().doubleValue());
+        
+        // Aggregate scores based on rating creation date
+        summary.getDateScores().forEach((dateTime, score) -> {
+          categoryScoreBuilder.addTimeline(
+              CategoryScoreTimelineEntry.newBuilder()
+                  .setTimestamp(fromLocalDateTimetoString(dateTime))
+                  .setScore(score.doubleValue())
+                  .build()
+          );
+        });
+        
+        responseBuilder.addScores(categoryScoreBuilder.build());
+      }
+      
+      responseObserver.onNext(responseBuilder.build());
+      responseObserver.onCompleted();
+    } catch (StatusRuntimeException e) {
+      responseObserver.onError(e);
+    } catch (Exception e) {
+      responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
-    
-    responseObserver.onNext(responseBuilder.build());
-    responseObserver.onCompleted();
   }
   
   @Override
   public void getTicketCategoryMatrix(TicketCategoryMatrixRequest request, StreamObserver<TicketCategoryMatrixResponse> responseObserver) {
     try {
-      LocalDateTime start = LocalDateTime.parse(request.getStartDate());
-      LocalDateTime end = LocalDateTime.parse(request.getEndDate());
+      validateTicketCategoryMatrixRequest(request);
       
-      Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = scoreAggregationService.getScoresByTicket(start, end);
+      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "startDate");
+      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "endDate");
+      
+      GrpcValidationUtils.validateDateOrder(startDate, endDate);
+      
+      Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(startDate, endDate);
       
       TicketCategoryMatrixResponse.Builder responseBuilder = TicketCategoryMatrixResponse.newBuilder();
       
@@ -100,20 +119,24 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       responseObserver.onNext(responseBuilder.build());
       responseObserver.onCompleted();
       
-    } catch (DateTimeParseException ex) {
-      responseObserver.onError(new IllegalArgumentException("Invalid date format. Use ISO-8601 format."));
-    } catch (Exception ex) {
-      responseObserver.onError(ex);
+    } catch (StatusRuntimeException e) {
+      responseObserver.onError(e);
+    } catch (Exception e) {
+      responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
   
   @Override
   public void getOverallQualityScore(OverallQualityScoreRequest request, StreamObserver<OverallQualityScoreResponse> responseObserver) {
     try {
-      LocalDateTime start = LocalDateTime.parse(request.getStartDate());
-      LocalDateTime end = LocalDateTime.parse(request.getEndDate());
+      validateOverallQualityScoreRequest(request);
       
-      BigDecimal overallScore = scoreAggregationService.getOverallScore(start, end);
+      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "startDate");
+      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "endDate");
+      
+      GrpcValidationUtils.validateDateOrder(startDate, endDate);
+      
+      BigDecimal overallScore = timelineService.getOverallScore(startDate, endDate);
       
       OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
           .setScore(overallScore.doubleValue())
@@ -122,21 +145,24 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       responseObserver.onNext(response);
       responseObserver.onCompleted();
       
-    } catch (DateTimeParseException ex) {
-      responseObserver.onError(new IllegalArgumentException("Invalid date format. Use ISO-8601 format."));
-    } catch (Exception ex) {
-      responseObserver.onError(ex);
+    } catch (StatusRuntimeException e) {
+      responseObserver.onError(e);
+    } catch (Exception e) {
+      responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
   
   @Override
-  public void comparePeriodScores(PeriodScoreComparisonRequest request,
-                                  StreamObserver<PeriodScoreComparisonResponse> responseObserver) {
+  public void comparePeriodScores(PeriodScoreComparisonRequest request, StreamObserver<PeriodScoreComparisonResponse> responseObserver) {
     try {
-      LocalDateTime currentStart = LocalDateTime.parse(request.getCurrentStart());
-      LocalDateTime currentEnd = LocalDateTime.parse(request.getCurrentEnd());
+      validatePeriodScoreComparisonRequest(request);
       
-      var change = scoreAggregationService.calculatePeriodOverPeriodChange(currentStart, currentEnd);
+      var currentStart = LocalDateTime.parse(request.getCurrentStart());
+      var currentEnd = LocalDateTime.parse(request.getCurrentEnd());
+      
+      GrpcValidationUtils.validateDateOrder(currentStart, currentEnd);
+      
+      var change = timelineService.calculatePeriodOverPeriodChange(currentStart, currentEnd);
       
       PeriodScoreComparisonResponse response = PeriodScoreComparisonResponse.newBuilder()
           .setCurrentPeriodScore(change.currentScore().doubleValue())
@@ -147,30 +173,38 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       responseObserver.onNext(response);
       responseObserver.onCompleted();
       
-    } catch (DateTimeParseException ex) {
-      responseObserver.onError(new IllegalArgumentException("Invalid date format. Use ISO-8601 format."));
-    } catch (Exception ex) {
-      responseObserver.onError(ex);
+    } catch (StatusRuntimeException e) {
+      responseObserver.onError(e);
+    } catch (Exception e) {
+      responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
-  }
-  
-  private LocalDateTime toLocalDateTime(Timestamp ts) {
-    return LocalDateTime.ofInstant(Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos()), ZoneOffset.UTC);
-  }
-  
-  private Timestamp toProtoTimestamp(LocalDateTime dateTime) {
-    Instant instant = dateTime.toInstant(ZoneOffset.UTC);
-    return Timestamp.newBuilder()
-        .setSeconds(instant.getEpochSecond())
-        .setNanos(instant.getNano())
-        .build();
-  }
-  
-  private LocalDateTime toLocalDateTime(String date) {
-    return LocalDateTime.parse(date, FORMATTER);
   }
   
   private String fromLocalDateTimetoString(LocalDateTime date) {
     return date.format(FORMATTER);
+  }
+  
+  private void validateGetTicketScoreRequest(GetTicketScoreRequest request) {
+    GrpcValidationUtils.validatePositive(request.getTicketId(), "ticketId");
+  }
+  
+  private void validateCategoryTimelineRequest(CategoryTimelineRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "startDate");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "endDate");
+  }
+  
+  private void validateTicketCategoryMatrixRequest(TicketCategoryMatrixRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "startDate");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "endDate");
+  }
+  
+  private void validateOverallQualityScoreRequest(OverallQualityScoreRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "startDate");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "endDate");
+  }
+  
+  private void validatePeriodScoreComparisonRequest(PeriodScoreComparisonRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getCurrentStart(), "current_date");
+    GrpcValidationUtils.validateNotBlank(request.getCurrentEnd(), "current_end");
   }
 }

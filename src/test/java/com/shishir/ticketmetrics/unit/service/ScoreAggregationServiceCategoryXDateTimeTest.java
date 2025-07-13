@@ -41,7 +41,7 @@ class ScoreAggregationServiceCategoryXDateTimeTest {
     
     when(ratingMapper.findRatingsInRange(any(), any())).thenReturn(ratings);
     
-    Map<Integer, CategoryScoreSummary> result = service.getCategoryScores(start, end);
+    Map<Integer, CategoryScoreSummary> result = service.getCategoryScoresOverTime(start, end);
     
     assertThat(result).hasSize(1);
     CategoryScoreSummary summary = result.get(1);

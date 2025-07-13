@@ -51,7 +51,7 @@ public class ScoreAggregationService {
    * @param endDate   end of time range (inclusive)
    * @return map from category ID to summary of score, timeline and count
    */
-  public Map<Integer, CategoryScoreSummary> getCategoryScores(LocalDateTime startDate, LocalDateTime endDate) {
+  public Map<Integer, CategoryScoreSummary> getCategoryScoresOverTime(LocalDateTime startDate, LocalDateTime endDate) {
     TimeBucket bucket = TimeBucketResolver.resolve(startDate, endDate);
     
     List<RatingWithCategory> ratings = ratingMapper.findRatingsInRange(startDate, endDate);
