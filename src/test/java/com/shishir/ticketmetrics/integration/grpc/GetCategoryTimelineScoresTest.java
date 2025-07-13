@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @IntegrationTest
 @Sql(scripts = {"/sql/schema.sql", "/sql/data_category_timeline.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class CategoryTimelineScoresTest {
+public class GetCategoryTimelineScoresTest {
   @LocalGrpcPort
   int port;
   

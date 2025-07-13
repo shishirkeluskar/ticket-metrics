@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @IntegrationTest
 @Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_score.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-class TicketScoreTest {
+class GetTicketScoreTest {
   
   @LocalGrpcPort
   int port;

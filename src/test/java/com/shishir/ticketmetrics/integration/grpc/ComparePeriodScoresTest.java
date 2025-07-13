@@ -1,13 +1,12 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.generated.grpc.TicketCategoryMatrixRequest;
+
+import com.shishir.ticketmetrics.generated.grpc.PeriodScoreComparisonRequest;
+import com.shishir.ticketmetrics.generated.grpc.PeriodScoreComparisonResponse;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
-import com.shishir.ticketmetrics.generated.grpc.TicketCategoryMatrixResponse;
-import com.shishir.ticketmetrics.generated.grpc.TicketCategoryScoreRow;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,12 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_matrix.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/data_period_comparison.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class TicketMetricsGrpcTicketScores {
-  @LocalGrpcPort
-  int port;
+class ComparePeriodScoresTest {
   
+  @LocalGrpcPort
+  private int port;
   private ManagedChannel channel;
   private TicketMetricsServiceGrpc.TicketMetricsServiceBlockingStub stub;
   
@@ -35,24 +34,20 @@ public class TicketMetricsGrpcTicketScores {
     stub = TicketMetricsServiceGrpc.newBlockingStub(channel);
   }
   
-  @AfterEach
-  void shutdown() {
-    channel.shutdownNow();
-  }
   
   @Test
-  void testGetTicketScores() {
-    TicketCategoryMatrixRequest request = TicketCategoryMatrixRequest.newBuilder()
-        .setStartDate("2025-07-01T00:00:00")
-        .setEndDate("2025-07-02T00:00:00")
+  void testGetPeriodOverPeriodScoreChange() {
+    String currentStart = "2020-01-01T00:00:00";
+    String currentEnd = "2020-01-31T00:00:00";
+    
+    PeriodScoreComparisonRequest request = PeriodScoreComparisonRequest.newBuilder()
+        .setCurrentStart(currentStart)
+        .setCurrentEnd(currentEnd)
         .build();
     
-    TicketCategoryMatrixResponse response = stub.getTicketCategoryMatrix(request);
+    PeriodScoreComparisonResponse response = stub.comparePeriodScores(request);
     
-    assertThat(response.getTicketScoresList()).isNotEmpty();
-    for (TicketCategoryScoreRow row : response.getTicketScoresList()) {
-      assertThat(row.getTicketId()).isGreaterThan(0);
-      assertThat(row.getCategoryScoresMap()).isNotEmpty();
-    }
+    assertThat(response.getCurrentPeriodScore()).isGreaterThanOrEqualTo(0);
+    assertThat(response.getPreviousPeriodScore()).isGreaterThanOrEqualTo(0);
   }
 }
