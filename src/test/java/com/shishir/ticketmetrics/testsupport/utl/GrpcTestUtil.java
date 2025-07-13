@@ -1,8 +1,6 @@
 package com.shishir.ticketmetrics.testsupport.utl;
 
-import com.shishir.ticketmetrics.generated.grpc.CategoryTimelineRequest;
-import com.shishir.ticketmetrics.generated.grpc.GetTicketScoreRequest;
-import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
+import com.shishir.ticketmetrics.generated.grpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -27,8 +25,22 @@ public class GrpcTestUtil {
         .build();
   }
   
-  public static CategoryTimelineRequest buildCategoryTimelineRequest(String startDate, String endDate) {
+  public static CategoryTimelineRequest buildGetCategoryTimelineScoresRequest(String startDate, String endDate) {
     return CategoryTimelineRequest.newBuilder()
+        .setStartDate(startDate)
+        .setEndDate(endDate)
+        .build();
+  }
+  
+  public static PeriodScoreComparisonRequest buildComparePeriodScoresRequest(String currentStart, String currentEnd) {
+    return PeriodScoreComparisonRequest.newBuilder()
+        .setCurrentStart(currentStart)
+        .setCurrentEnd(currentEnd)
+        .build();
+  }
+  
+  public static TicketCategoryMatrixRequest buildGetTicketCategoryMatrixRequest(String startDate, String endDate) {
+    return TicketCategoryMatrixRequest.newBuilder()
         .setStartDate(startDate)
         .setEndDate(endDate)
         .build();

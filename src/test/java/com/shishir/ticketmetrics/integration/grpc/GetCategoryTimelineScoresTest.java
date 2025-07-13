@@ -47,7 +47,7 @@ public class GetCategoryTimelineScoresTest {
   
   @Test
   void shouldFail_whenInvalidStartDate() {
-    var request = GrpcTestUtil.buildCategoryTimelineRequest("incorrect-start-date", "2025-07-04T00:00:00");
+    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest("incorrect-start-date", "2025-07-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getCategoryTimelineScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -56,7 +56,7 @@ public class GetCategoryTimelineScoresTest {
   
   @Test
   void shouldFail_whenInvalidEndDate() {
-    var request = GrpcTestUtil.buildCategoryTimelineRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest("2025-07-04T00:00:00", "incorrect-end-date");
     
     assertThatThrownBy(() -> grpcStub.getCategoryTimelineScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -65,7 +65,7 @@ public class GetCategoryTimelineScoresTest {
   
   @Test
   void shouldFail_whenInvalidDateOrder() {
-    var request = GrpcTestUtil.buildCategoryTimelineRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getCategoryTimelineScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -74,7 +74,7 @@ public class GetCategoryTimelineScoresTest {
   
   @Test
   void canGetCategoryTimelineScores() {
-    var request = GrpcTestUtil.buildCategoryTimelineRequest("2025-07-02T00:00:00", "2025-07-04T00:00:00");
+    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest("2025-07-02T00:00:00", "2025-07-04T00:00:00");
     
     var response = grpcStub.getCategoryTimelineScores(request);
     
