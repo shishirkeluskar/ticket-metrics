@@ -8,7 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,16 +28,23 @@ public class TicketScoringService {
    * @param ticketId ticket ID
    * @return percentage score between 0 and 100
    */
-  @Cacheable(value = "ticketScoresByTicketId", key = "#ticketId")
-  public double computeScore(Integer ticketId) {
-    LOG.debug("Calculating score for ticketId={}", ticketId);
+  @Cacheable(value = "ticketScores", key = "#ticketId")
+  public double getTicketScore(Integer ticketId) {
+    LOG.debug("Calculating score: ticketId={}", ticketId);
     
-    List<Rating> ratings = ratingMapper.fetchRatingsByTicketId(ticketId);
-    var ratingMap = ratings.stream().collect(Collectors.toMap(Rating::ratingCategoryId, Rating::rating));
+    var ratingMap = getRatingMap(ticketId);
     var weightMap = ratingMapper.getCategoryWeightMap();
     var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap);
     
-    LOG.debug("Calculated score={} for ticketId={}", score, ticketId);
+    LOG.debug("Calculated score={}, ticketId={}", score, ticketId);
     return score;
+  }
+  
+  private Map<Integer, BigDecimal> getRatingMap(Integer ticketId) {
+    LOG.debug("Fetching ratings: ticketId={}", ticketId);
+    return ratingMapper
+        .fetchRatingsByTicketId(ticketId)
+        .stream()
+        .collect(Collectors.toMap(Rating::ratingCategoryId, Rating::rating));
   }
 }

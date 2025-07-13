@@ -29,7 +29,7 @@ class TicketScoringServiceTest {
   }
   
   @Test
-  void testComputeScore() {
+  void testGetTicketScore() {
     int ticketId = 1;
     
     List<Rating> ratings = List.of(
@@ -45,7 +45,7 @@ class TicketScoringServiceTest {
     when(ratingMapper.fetchRatingsByTicketId(ticketId)).thenReturn(ratings);
     when(ratingMapper.getCategoryWeightMap()).thenReturn(weights);
     
-    double score = scoringService.computeScore(ticketId);
+    double score = scoringService.getTicketScore(ticketId);
     
     assertEquals(92.0, score); // ((80x2 + 100x3) / 5) = 92%
   }

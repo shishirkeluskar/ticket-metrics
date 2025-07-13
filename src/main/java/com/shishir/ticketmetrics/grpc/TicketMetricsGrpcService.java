@@ -31,7 +31,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   public void getTicketScore(GetTicketScoreRequest request, StreamObserver<GetTicketScoreResponse> responseObserver) {
     try {
       validateGetTicketScoreRequest(request);
-      double score = ticketScoringService.computeScore(request.getTicketId());
+      double score = ticketScoringService.getTicketScore(request.getTicketId());
       
       var response = GetTicketScoreResponse.newBuilder()
           .setScore(score)
