@@ -157,12 +157,12 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     try {
       validatePeriodScoreComparisonRequest(request);
       
-      var currentStart = LocalDateTime.parse(request.getCurrentStart());
-      var currentEnd = LocalDateTime.parse(request.getCurrentEnd());
+      var currentStartDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentStart(), "current_start_date");
+      var currentEndDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentEnd(), "current_end_date");
       
-      GrpcValidationUtils.validateDateOrder(currentStart, currentEnd);
+      GrpcValidationUtils.validateDateOrder(currentStartDate, currentEndDate);
       
-      var change = timelineService.calculatePeriodOverPeriodChange(currentStart, currentEnd);
+      var change = timelineService.calculatePeriodOverPeriodChange(currentStartDate, currentEndDate);
       
       PeriodScoreComparisonResponse response = PeriodScoreComparisonResponse.newBuilder()
           .setCurrentPeriodScore(change.currentScore().doubleValue())
@@ -204,7 +204,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   private void validatePeriodScoreComparisonRequest(PeriodScoreComparisonRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getCurrentStart(), "current_date");
-    GrpcValidationUtils.validateNotBlank(request.getCurrentEnd(), "current_end");
+    GrpcValidationUtils.validateNotBlank(request.getCurrentStart(), "current_start_date");
+    GrpcValidationUtils.validateNotBlank(request.getCurrentEnd(), "current_end_date");
   }
 }

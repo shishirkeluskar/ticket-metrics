@@ -6,6 +6,7 @@ import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
 import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @IntegrationTest
@@ -38,6 +40,39 @@ class ComparePeriodScoresTest {
     channel.shutdownNow();
   }
   
+  @Test
+  void shouldFail_whenEmptyRequest() {
+    assertThatThrownBy(() -> grpcStub.getCategoryTimelineScores(null))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("INVALID_ARGUMENT: start_date must not be blank");
+  }
+  
+  @Test
+  void shouldFail_whenInvalidCurrentStartDate() {
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest("incorrect-start-date", "2025-07-04T00:00:00");
+    
+    assertThatThrownBy(() -> grpcStub.comparePeriodScores(request))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("INVALID_ARGUMENT: current_start_date must be in ISO date-time format but was incorrect-start-date");
+  }
+  
+  @Test
+  void shouldFail_whenInvalidCurrentEndDate() {
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    
+    assertThatThrownBy(() -> grpcStub.comparePeriodScores(request))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("INVALID_ARGUMENT: current_end_date must be in ISO date-time format but was incorrect-end-date");
+  }
+  
+  @Test
+  void shouldFail_whenInvalidDateOrder() {
+    var request = GrpcTestUtil.buildComparePeriodScoresRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    
+    assertThatThrownBy(() -> grpcStub.comparePeriodScores(request))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
+  }
   
   @Test
   void testGetPeriodOverPeriodScoreChange() {
