@@ -8,7 +8,7 @@ option java_outer_classname = "TicketMetricsProto";
 
 import "google/protobuf/timestamp.proto";
 
-// -------- 1. A ticket score --------
+// -------- 1. Ticket Score --------
 
 message GetTicketScoreRequest {
   int32 ticket_id = 1;
@@ -90,8 +90,8 @@ message PeriodOverPeriodResponse {
 
 service TicketMetricsService {
   rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
-  rpc GetCategoryScoreOverTime (CategoryScoreRequest) returns (CategoryScoreResponse);
-  rpc GetTicketScores (TicketScoreRequest) returns (TicketScoreResponse);
-  rpc GetOverallScore(OverallScoreRequest) returns (OverallScoreResponse);
-  rpc GetPeriodOverPeriodScoreChange(PeriodOverPeriodRequest) returns (PeriodOverPeriodResponse);
+  rpc GetCategoryTimelineScores (CategoryScoreRequest) returns (CategoryScoreResponse);
+  rpc GetTicketCategoryMatrix (TicketScoreRequest) returns (TicketScoreResponse);
+  rpc GetOverallQualityScore(OverallScoreRequest) returns (OverallScoreResponse);
+  rpc ComparePeriodScores(PeriodOverPeriodRequest) returns (PeriodOverPeriodResponse);
 }

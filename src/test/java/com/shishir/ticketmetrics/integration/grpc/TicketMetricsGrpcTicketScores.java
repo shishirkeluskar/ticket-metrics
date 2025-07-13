@@ -47,7 +47,7 @@ public class TicketMetricsGrpcTicketScores {
         .setEnd("2025-07-02T00:00:00")
         .build();
     
-    TicketScoreResponse response = stub.getTicketScores(request);
+    TicketScoreResponse response = stub.getTicketCategoryMatrix(request);
     
     assertThat(response.getTicketScoresList()).isNotEmpty();
     for (TicketScoreRow row : response.getTicketScoresList()) {

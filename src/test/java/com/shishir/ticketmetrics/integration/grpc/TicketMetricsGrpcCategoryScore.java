@@ -47,7 +47,7 @@ public class TicketMetricsGrpcCategoryScore {
         .setEndDate("2025-07-04T00:00:00")
         .build();
     
-    CategoryScoreResponse response = stub.getCategoryScoreOverTime(request);
+    CategoryScoreResponse response = stub.getCategoryTimelineScores(request);
     
     assertThat(response.getScoresList()).isNotEmpty();
     for (CategoryScore score : response.getScoresList()) {

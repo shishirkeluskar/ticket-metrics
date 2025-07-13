@@ -42,7 +42,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getCategoryScoreOverTime(CategoryScoreRequest request, StreamObserver<CategoryScoreResponse> responseObserver) {
+  public void getCategoryTimelineScores(CategoryScoreRequest request, StreamObserver<CategoryScoreResponse> responseObserver) {
     LocalDateTime start = toLocalDateTime(request.getStartDate());
     LocalDateTime end = toLocalDateTime(request.getEndDate());
     
@@ -77,7 +77,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getTicketScores(TicketScoreRequest request, StreamObserver<TicketScoreResponse> responseObserver) {
+  public void getTicketCategoryMatrix(TicketScoreRequest request, StreamObserver<TicketScoreResponse> responseObserver) {
     try {
       LocalDateTime start = LocalDateTime.parse(request.getStart());
       LocalDateTime end = LocalDateTime.parse(request.getEnd());
@@ -108,7 +108,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getOverallScore(OverallScoreRequest request, StreamObserver<OverallScoreResponse> responseObserver) {
+  public void getOverallQualityScore(OverallScoreRequest request, StreamObserver<OverallScoreResponse> responseObserver) {
     try {
       LocalDateTime start = LocalDateTime.parse(request.getStart());
       LocalDateTime end = LocalDateTime.parse(request.getEnd());
@@ -130,7 +130,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getPeriodOverPeriodScoreChange(PeriodOverPeriodRequest request,
+  public void comparePeriodScores(PeriodOverPeriodRequest request,
                                              StreamObserver<PeriodOverPeriodResponse> responseObserver) {
     try {
       LocalDateTime currentStart = LocalDateTime.parse(request.getCurrentStart());

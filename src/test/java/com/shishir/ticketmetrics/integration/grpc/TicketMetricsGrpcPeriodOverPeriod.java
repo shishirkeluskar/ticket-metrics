@@ -45,7 +45,7 @@ class TicketMetricsGrpcPeriodOverPeriod {
         .setCurrentEnd(currentEnd)
         .build();
     
-    PeriodOverPeriodResponse response = stub.getPeriodOverPeriodScoreChange(request);
+    PeriodOverPeriodResponse response = stub.comparePeriodScores(request);
     
     assertThat(response.getCurrentPeriodScore()).isGreaterThanOrEqualTo(0);
     assertThat(response.getPreviousPeriodScore()).isGreaterThanOrEqualTo(0);
