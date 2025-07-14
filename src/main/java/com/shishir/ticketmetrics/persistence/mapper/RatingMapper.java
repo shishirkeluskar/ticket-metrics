@@ -1,9 +1,9 @@
 package com.shishir.ticketmetrics.persistence.mapper;
 
-import com.shishir.ticketmetrics.persistence.model.Rating;
-import com.shishir.ticketmetrics.persistence.model.RatingCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
+import com.shishir.ticketmetrics.persistence.model.Rating;
+import com.shishir.ticketmetrics.persistence.model.RatingCategory;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -37,9 +37,9 @@ public interface RatingMapper {
   @Select("""
           SELECT *
           FROM ratings
-          WHERE DATE(created_at) = #{date}
+          WHERE DATE(created_at) = #{ratingDate}
       """)
-  List<Rating> fetchRatingsByDate2(LocalDate date);
+  List<Rating> fetchRatingsByRatingDate(@Param("ratingDate") LocalDate ratingDate);
   
   @Select("""
           SELECT r.rating_category_id AS category_id,
@@ -89,20 +89,6 @@ public interface RatingMapper {
       @Param("categoryId") int categoryId,
       @Param("start") LocalDateTime start,
       @Param("end") LocalDateTime end);
-  
-  @Select("""
-      SELECT
-              r.ticket_id,
-              r.rating_category_id AS category_id,
-              r.rating,
-              rc.weight,
-              t.created_at AS ticket_created_at
-          FROM ratings r
-          JOIN rating_categories rc ON r.rating_category_id = rc.id
-          JOIN tickets t ON r.ticket_id = t.id
-          WHERE t.created_at BETWEEN #{start} AND #{end}
-      """)
-  List<RatingWithCategoryWeight> findRatingsCreatedBetween(LocalDateTime start, LocalDateTime end);
   
   /**
    * Returns categoryId -> weight map.

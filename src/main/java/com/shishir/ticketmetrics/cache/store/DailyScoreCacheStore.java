@@ -26,7 +26,7 @@ public class DailyScoreCacheStore {
   @Cacheable(value = "dailyScores", key = "#date")
   public BigDecimal getScoreForDate(LocalDate date) {
     LOG.debug("Fetching Rating+Weights for date={}", date);
-    var ratings = ratingMapper.fetchRatingsByDate2(date);
+    var ratings = ratingMapper.fetchRatingsByRatingDate(date);
     var ratingMap = getRatingMap(ratings);
     var weightMap = ratingMapper.getCategoryWeightMap();
     var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap);
