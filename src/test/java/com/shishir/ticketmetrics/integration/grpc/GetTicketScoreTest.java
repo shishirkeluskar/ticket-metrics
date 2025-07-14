@@ -8,16 +8,21 @@ import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_score.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_ticket_score.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class GetTicketScoreTest {
   
@@ -54,13 +59,21 @@ class GetTicketScoreTest {
         .hasMessageContaining("INVALID_ARGUMENT: ticket_id must be a positive number");
   }
   
-  @Test
-  void canGetTicketScore() {
-    var request = GrpcTestUtil.buildGetTicketScoreRequest(1);
+  @ParameterizedTest()
+  @MethodSource("getTicketScoreTestData")
+  void canGetTicketScore(Integer ticketId, double expectedScore) {
+    var request = GrpcTestUtil.buildGetTicketScoreRequest(ticketId);
     
     var response = grpcStub.getTicketScore(request);
     
-    assertThat(response.getScore()).isBetween(0.0, 100.0);
+    assertThat(response.getScore()).isEqualTo(expectedScore);
+  }
+  
+  static Stream<Arguments> getTicketScoreTestData() {
+    return Stream.of(
+        Arguments.arguments(201, 89.09d),
+        Arguments.arguments(202, 48.24d)
+    );
   }
 }
 

@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS rating_categories;
 CREATE TABLE rating_categories (
     id integer PRIMARY KEY AUTOINCREMENT,
     name text NOT NULL,
-    weight integer NOT NULL
+    weight real NOT NULL
 );
 
 -- tickets definition
