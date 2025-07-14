@@ -3,6 +3,7 @@ package com.shishir.ticketmetrics.grpc;
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
+import com.shishir.ticketmetrics.service.ComparePeriodService;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoringService;
@@ -12,6 +13,7 @@ import io.grpc.stub.StreamObserver;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -21,12 +23,14 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
   private final TicketScoringService ticketScoringService;
   private final OverallScoreService overallScoreService;
+  private final ComparePeriodService comparePeriodService;
   private final ScoreAggregationService timelineService;
   
   
-  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
+  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, OverallScoreService overallScoreService, ComparePeriodService comparePeriodService, ScoreAggregationService timelineService) {
     this.ticketScoringService = ticketScoreService;
     this.overallScoreService = overallScoreService;
+    this.comparePeriodService = comparePeriodService;
     this.timelineService = timelineService;
   }
   
@@ -139,7 +143,6 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
-      //BigDecimal overallScore = timelineService.getOverallScore(startDate, endDate);
       BigDecimal overallScore = overallScoreService.getOverallScore(startDate.toLocalDate(), endDate.toLocalDate());
       
       OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
@@ -163,27 +166,24 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       
       var currentStartDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentStartDate(), "current_start_date");
       var currentEndDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentEndDate(), "current_end_date");
-      var previousStartDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentStartDate(), "previous_start_date");
-      var previousEndDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentEndDate(), "previous_end_date");
+      var previousStartDate = GrpcValidationUtils.parseIsoDateTime(request.getPreviousStartDate(), "previous_start_date");
+      var previousEndDate = GrpcValidationUtils.parseIsoDateTime(request.getPreviousEndDate(), "previous_end_date");
       
       GrpcValidationUtils.validateDateOrder(currentStartDate, currentEndDate);
+      GrpcValidationUtils.validateDateOrder(previousStartDate, previousEndDate);
       
-      var change = timelineService.calculatePeriodOverPeriodChange(
-          currentStartDate,
-          currentEndDate,
-          previousStartDate,
-          previousEndDate
-      );
+      BigDecimal currentScore = overallScoreService.getOverallScore(currentStartDate.toLocalDate(), currentEndDate.toLocalDate());
+      BigDecimal previousScore = overallScoreService.getOverallScore(previousStartDate.toLocalDate(), previousEndDate.toLocalDate());
+      BigDecimal change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
       
       PeriodScoreComparisonResponse response = PeriodScoreComparisonResponse.newBuilder()
-          .setCurrentPeriodScore(change.currentScore().doubleValue())
-          .setPreviousPeriodScore(change.previousScore().doubleValue())
-          .setScoreChange(change.change().doubleValue())
+          .setCurrentPeriodScore(currentScore.doubleValue())
+          .setPreviousPeriodScore(previousScore.doubleValue())
+          .setScoreChange(change.doubleValue())
           .build();
       
       responseObserver.onNext(response);
       responseObserver.onCompleted();
-      
     } catch (StatusRuntimeException e) {
       responseObserver.onError(e);
     } catch (Exception e) {

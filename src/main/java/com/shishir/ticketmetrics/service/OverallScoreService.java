@@ -25,7 +25,7 @@ public class OverallScoreService {
     return calculateAverage(getScoresInRange(startDate, endDate));
   }
   
-  private static BigDecimal calculateAverage(List<DailyAggregateScore> dailyAggregateScores) {
+  private BigDecimal calculateAverage(List<DailyAggregateScore> dailyAggregateScores) {
     int count = dailyAggregateScores.size();
     var sum = dailyAggregateScores.stream()
         .map(DailyAggregateScore::toPercentage)

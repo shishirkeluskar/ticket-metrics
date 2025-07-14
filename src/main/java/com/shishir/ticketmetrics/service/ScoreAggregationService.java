@@ -12,8 +12,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -150,55 +148,6 @@ public class ScoreAggregationService {
     }
     
     return result;
-  }
-  
-  public BigDecimal getOverallScore(LocalDateTime start, LocalDateTime end) {
-    // Fetch all ratings weighted by category weights between dates
-    List<RatingWithCategoryWeight> ratings = ratingMapper.findRatingsCreatedBetween(start, end);
-    
-    BigDecimal weightedSum = BigDecimal.ZERO;
-    BigDecimal totalWeight = BigDecimal.ZERO;
-    BigDecimal maxRating = BigDecimal.valueOf(5);
-    
-    for (RatingWithCategoryWeight rating : ratings) {
-      BigDecimal weightedRating = rating.rating().multiply(rating.weight());
-      weightedSum = weightedSum.add(weightedRating);
-      totalWeight = totalWeight.add(rating.weight().multiply(maxRating));
-    }
-    
-    if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
-      return BigDecimal.ZERO;
-    }
-    
-    // Calculate percentage score
-    return weightedSum.multiply(BigDecimal.valueOf(100)).divide(totalWeight, 2, RoundingMode.HALF_UP);
-  }
-  
-  /**
-   * Calculates the overall score change between the current period and the previous period.
-   * Previous period is assumed to be same length immediately before current period.
-   *
-   * @param currentStart start datetime of the current period (inclusive)
-   * @param currentEnd   end datetime of the current period (exclusive)
-   * @return a Triple of (currentScore, previousScore, change)
-   */
-  public PeriodScoreChange calculatePeriodOverPeriodChange(
-      LocalDateTime currentStart,
-      LocalDateTime currentEnd,
-      LocalDateTime previousStartDate,
-      LocalDateTime previousEndDate
-  ) {
-    
-    BigDecimal currentScore = getOverallScore(currentStart, currentEnd);
-    BigDecimal previousScore = getOverallScore(previousStartDate, previousEndDate);
-    
-    BigDecimal change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
-    
-    return new PeriodScoreChange(currentScore, previousScore, change);
-  }
-  
-  // A simple DTO to hold the 3 values
-  public static record PeriodScoreChange(BigDecimal currentScore, BigDecimal previousScore, BigDecimal change) {
   }
   
   private LocalDateTime toBucketDate(LocalDateTime ts, TimeBucket bucket) {
