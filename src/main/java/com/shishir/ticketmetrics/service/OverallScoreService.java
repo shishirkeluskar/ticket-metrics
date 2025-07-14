@@ -1,6 +1,5 @@
 package com.shishir.ticketmetrics.service;
 
-import com.shishir.ticketmetrics.cache.mode.DailyAggregateScore;
 import com.shishir.ticketmetrics.cache.store.DailyScoreCacheStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,25 +21,17 @@ public class OverallScoreService {
   
   public BigDecimal getOverallScore(LocalDate startDate, LocalDate endDate) {
     LOG.debug("Calculating overall score: startDate={}, endDate={}", startDate, endDate);
-    var x = calculateAverage(getScoresInRange(startDate, endDate));
-    
-    var y = cacheStore.getScoreForDate2(startDate);
-    return x;
-  }
-  
-  private BigDecimal calculateAverage(List<DailyAggregateScore> dailyAggregateScores) {
-    int count = dailyAggregateScores.size();
-    var sum = dailyAggregateScores.stream()
-        .map(DailyAggregateScore::toPercentage)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    var scores = getScoresInRange(startDate, endDate);
+    int count = scores.size();
+    var sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     var average = count > 0 ? sum.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
     LOG.debug("Calculated overall score: sum={}, count={}, average={}", sum, count, average);
     return average;
   }
   
-  private List<DailyAggregateScore> getScoresInRange(LocalDate startDate, LocalDate endDate) {
+  private List<BigDecimal> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     return startDate.datesUntil(endDate.plusDays(1))
-        .map(cacheStore::getScoreForDate)
+        .map(cacheStore::getScoreForDate2)
         .toList();
   }
 }
