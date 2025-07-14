@@ -2,6 +2,7 @@ package com.shishir.ticketmetrics.integration.grpc;
 
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
+import com.shishir.ticketmetrics.testsupport.utl.CacheTestUtil;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
@@ -11,7 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -30,6 +33,9 @@ class GetTicketScoreTest {
   @LocalGrpcPort
   int port;
   
+  @Autowired
+  private CacheManager cacheManager;
+  
   private ManagedChannel channel;
   private TicketMetricsServiceGrpc.TicketMetricsServiceBlockingStub grpcStub;
   
@@ -42,6 +48,7 @@ class GetTicketScoreTest {
   @AfterEach
   void shutdown() {
     channel.shutdownNow();
+    CacheTestUtil.clearCache(cacheManager);
   }
   
   @Test
