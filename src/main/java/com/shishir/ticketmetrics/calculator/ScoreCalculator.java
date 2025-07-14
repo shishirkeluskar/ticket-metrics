@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
-public class TicketScoreCalculator {
-  private static final Logger LOG = LoggerFactory.getLogger(TicketScoreCalculator.class);
+public class ScoreCalculator {
+  private static final Logger LOG = LoggerFactory.getLogger(ScoreCalculator.class);
   private static final BigDecimal MIN_SCALE = new BigDecimal("0.0");
   private static final BigDecimal MAX_SCALE = new BigDecimal("5.0");
   private static final BigDecimal HUNDRED = new BigDecimal("100.0");

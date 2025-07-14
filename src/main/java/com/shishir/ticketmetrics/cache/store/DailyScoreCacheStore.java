@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.cache.store;
 
-import com.shishir.ticketmetrics.calculator.TicketScoreCalculator;
+import com.shishir.ticketmetrics.calculator.ScoreCalculator;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.model.Rating;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class DailyScoreCacheStore {
     var ratings = ratingDao.fetchRatingsByRatingDate(date);
     var ratingMap = getRatingMap(ratings);
     var weightMap = ratingDao.getCategoryWeightMap();
-    var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap);
+    var score = ScoreCalculator.calculateScore(ratingMap, weightMap);
     return score;
   }
   
