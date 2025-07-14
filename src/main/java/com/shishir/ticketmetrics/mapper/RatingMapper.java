@@ -1,6 +1,9 @@
 package com.shishir.ticketmetrics.mapper;
 
-import com.shishir.ticketmetrics.model.*;
+import com.shishir.ticketmetrics.model.Rating;
+import com.shishir.ticketmetrics.model.RatingCategory;
+import com.shishir.ticketmetrics.model.RatingWithCategory;
+import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -114,16 +117,4 @@ public interface RatingMapper {
             RatingCategory::weight
         ));
   }
-  
-  @Select("""
-      SELECT
-            r.ticket_id,
-            r.rating_category_id AS categoryId,
-            r.rating AS rating,
-            rc.weight AS weight
-          FROM ratings r
-          JOIN rating_categories rc ON rc.id = r.rating_category_id
-          WHERE DATE(r.created_at) = #{date}
-      """)
-  List<RatingWithCategoryWeight2> findRatingsByDate(LocalDate date);
 }
