@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,7 @@ public class TicketScoringService {
     var ratingMap = getRatingMap(ticketId);
     var weightMap = ratingMapper.getCategoryWeightMap();
     var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap)
-        .setScale(2)
+        .setScale(2, RoundingMode.HALF_UP)
         .doubleValue();
     
     LOG.debug("Calculated score={}, ticketId={}", score, ticketId);

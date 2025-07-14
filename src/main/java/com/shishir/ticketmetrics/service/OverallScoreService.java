@@ -31,7 +31,7 @@ public class OverallScoreService {
   
   private List<BigDecimal> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     return startDate.datesUntil(endDate.plusDays(1))
-        .map(cacheStore::getScoreForDate2)
+        .map(cacheStore::getScoreForDate)
         .toList();
   }
 }

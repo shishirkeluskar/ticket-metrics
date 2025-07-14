@@ -32,6 +32,13 @@ public interface RatingMapper {
   List<RatingCategory> fetchRatingCategories();
   
   @Select("""
+          SELECT *
+          FROM ratings
+          WHERE DATE(created_at) = #{date}
+      """)
+  List<Rating> fetchRatingsByDate2(LocalDate date);
+  
+  @Select("""
           SELECT r.rating_category_id AS category_id,
                  r.rating,
                  r.created_at AS timestamp
