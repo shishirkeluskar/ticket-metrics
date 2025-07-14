@@ -1,7 +1,7 @@
-package com.shishir.ticketmetrics.mapper;
+package com.shishir.ticketmetrics.persistence.mapper;
 
-import com.shishir.ticketmetrics.model.Rating;
-import com.shishir.ticketmetrics.model.RatingCategory;
+import com.shishir.ticketmetrics.persistence.model.Rating;
+import com.shishir.ticketmetrics.persistence.model.RatingCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import org.apache.ibatis.annotations.Mapper;

@@ -1,8 +1,8 @@
 package com.shishir.ticketmetrics.cache.store;
 
 import com.shishir.ticketmetrics.calculator.TicketScoreCalculator;
-import com.shishir.ticketmetrics.mapper.RatingMapper;
-import com.shishir.ticketmetrics.model.Rating;
+import com.shishir.ticketmetrics.persistence.mapper.RatingMapper;
+import com.shishir.ticketmetrics.persistence.model.Rating;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;

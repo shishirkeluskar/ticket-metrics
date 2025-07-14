@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.service;
 
-import com.shishir.ticketmetrics.mapper.RatingMapper;
+import com.shishir.ticketmetrics.persistence.mapper.RatingMapper;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
