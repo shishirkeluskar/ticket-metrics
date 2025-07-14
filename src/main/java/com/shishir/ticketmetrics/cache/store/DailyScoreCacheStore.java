@@ -1,7 +1,7 @@
 package com.shishir.ticketmetrics.cache.store;
 
 import com.shishir.ticketmetrics.calculator.TicketScoreCalculator;
-import com.shishir.ticketmetrics.persistence.mapper.RatingMapper;
+import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.model.Rating;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,18 +17,18 @@ import java.util.stream.Collectors;
 @Component
 public class DailyScoreCacheStore {
   private static final Logger LOG = LoggerFactory.getLogger(DailyScoreCacheStore.class);
-  private final RatingMapper ratingMapper;
+  private final RatingDao ratingDao;
   
-  public DailyScoreCacheStore(RatingMapper ratingMapper) {
-    this.ratingMapper = ratingMapper;
+  public DailyScoreCacheStore(RatingDao ratingDao) {
+    this.ratingDao = ratingDao;
   }
   
   @Cacheable(value = "dailyScores", key = "#date")
   public BigDecimal getScoreForDate(LocalDate date) {
     LOG.debug("Fetching Rating+Weights for date={}", date);
-    var ratings = ratingMapper.fetchRatingsByRatingDate(date);
+    var ratings = ratingDao.fetchRatingsByRatingDate(date);
     var ratingMap = getRatingMap(ratings);
-    var weightMap = ratingMapper.getCategoryWeightMap();
+    var weightMap = ratingDao.getCategoryWeightMap();
     var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap);
     return score;
   }

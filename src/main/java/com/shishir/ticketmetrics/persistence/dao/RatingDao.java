@@ -1,4 +1,4 @@
-package com.shishir.ticketmetrics.persistence.mapper;
+package com.shishir.ticketmetrics.persistence.dao;
 
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Mapper
-public interface RatingMapper {
+public interface RatingDao {
   @Select("""
           SELECT *
           FROM ratings

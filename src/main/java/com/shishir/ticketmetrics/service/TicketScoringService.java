@@ -1,7 +1,7 @@
 package com.shishir.ticketmetrics.service;
 
 import com.shishir.ticketmetrics.calculator.TicketScoreCalculator;
-import com.shishir.ticketmetrics.persistence.mapper.RatingMapper;
+import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.model.Rating;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
 public class TicketScoringService {
   
   private static final Logger LOG = LoggerFactory.getLogger(TicketScoringService.class);
-  private final RatingMapper ratingMapper;
+  private final RatingDao ratingDao;
   
-  public TicketScoringService(RatingMapper ratingMapper) {
-    this.ratingMapper = ratingMapper;
+  public TicketScoringService(RatingDao ratingDao) {
+    this.ratingDao = ratingDao;
   }
   
   /**
@@ -34,7 +34,7 @@ public class TicketScoringService {
     LOG.debug("Calculating score: ticketId={}", ticketId);
     
     var ratingMap = getRatingMap(ticketId);
-    var weightMap = ratingMapper.getCategoryWeightMap();
+    var weightMap = ratingDao.getCategoryWeightMap();
     var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap)
         .setScale(2, RoundingMode.HALF_UP)
         .doubleValue();
@@ -45,7 +45,7 @@ public class TicketScoringService {
   
   private Map<Integer, BigDecimal> getRatingMap(Integer ticketId) {
     LOG.debug("Fetching ratings: ticketId={}", ticketId);
-    return ratingMapper
+    return ratingDao
         .fetchRatingsByTicketId(ticketId)
         .stream()
         .collect(Collectors.toMap(Rating::ratingCategoryId, Rating::rating));

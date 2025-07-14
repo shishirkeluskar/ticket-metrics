@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.service;
 
-import com.shishir.ticketmetrics.persistence.mapper.RatingMapper;
+import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
@@ -17,10 +17,10 @@ import java.util.*;
 
 @Service
 public class ScoreAggregationService {
-  private final RatingMapper ratingMapper;
+  private final RatingDao ratingDao;
   
-  public ScoreAggregationService(RatingMapper ratingMapper) {
-    this.ratingMapper = ratingMapper;
+  public ScoreAggregationService(RatingDao ratingDao) {
+    this.ratingDao = ratingDao;
   }
   
   /**
@@ -53,7 +53,7 @@ public class ScoreAggregationService {
   public Map<Integer, CategoryScoreSummary> getCategoryScoresOverTime(LocalDateTime startDate, LocalDateTime endDate) {
     TimeBucket bucket = TimeBucketResolver.resolve(startDate, endDate);
     
-    List<RatingWithCategory> ratings = ratingMapper.findRatingsInRange(startDate, endDate);
+    List<RatingWithCategory> ratings = ratingDao.findRatingsInRange(startDate, endDate);
     
     Map<Integer, Map<LocalDateTime, List<BigDecimal>>> grouped = new LinkedHashMap<>();
     
@@ -92,7 +92,7 @@ public class ScoreAggregationService {
   @Cacheable(value = "ticketCategoryScores", key = "#ticketId + '-' + #categoryId + '-' + #start.toString() + '-' + #end.toString()")
   public BigDecimal calculateScoreForTicketCategory(int ticketId, int categoryId, LocalDateTime start, LocalDateTime end) {
     // Call mapper to get ratings for this ticket-category in period
-    List<RatingWithCategoryWeight> ratings = ratingMapper.findRatingsForTicketCategoryBetween(ticketId, categoryId, start, end);
+    List<RatingWithCategoryWeight> ratings = ratingDao.findRatingsForTicketCategoryBetween(ticketId, categoryId, start, end);
     
     BigDecimal totalWeight = BigDecimal.ZERO;
     BigDecimal weightedSum = BigDecimal.ZERO;
@@ -128,7 +128,7 @@ public class ScoreAggregationService {
    */
   public Map<Integer, Map<Integer, BigDecimal>> getScoresByTicket(LocalDateTime start, LocalDateTime end) {
     // Get all ticket-category pairs to calculate
-    List<RatingWithCategoryWeight> allRatings = ratingMapper.findRatingsForTicketsCreatedBetween(start, end);
+    List<RatingWithCategoryWeight> allRatings = ratingDao.findRatingsForTicketsCreatedBetween(start, end);
     
     // Collect distinct ticketId-categoryId pairs
     var ticketCategoryPairs = allRatings.stream()
