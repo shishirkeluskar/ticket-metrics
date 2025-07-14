@@ -22,7 +22,10 @@ public class OverallScoreService {
   
   public BigDecimal getOverallScore(LocalDate startDate, LocalDate endDate) {
     LOG.debug("Calculating overall score: startDate={}, endDate={}", startDate, endDate);
-    return calculateAverage(getScoresInRange(startDate, endDate));
+    var x = calculateAverage(getScoresInRange(startDate, endDate));
+    
+    var y = cacheStore.getScoreForDate2(startDate);
+    return x;
   }
   
   private BigDecimal calculateAverage(List<DailyAggregateScore> dailyAggregateScores) {

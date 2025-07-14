@@ -34,7 +34,9 @@ public class TicketScoringService {
     
     var ratingMap = getRatingMap(ticketId);
     var weightMap = ratingMapper.getCategoryWeightMap();
-    var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap);
+    var score = TicketScoreCalculator.calculateScore(ratingMap, weightMap)
+        .setScale(2)
+        .doubleValue();
     
     LOG.debug("Calculated score={}, ticketId={}", score, ticketId);
     return score;

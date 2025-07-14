@@ -65,7 +65,7 @@ public class TicketScoreCalculator {
    * @param categoryWeights Map of categoryId → weight (integer > 0)
    * @return score as percentage (0–100), rounded to 2 decimals
    */
-  public static double calculateScore(
+  public static BigDecimal calculateScore(
       Map<Integer, BigDecimal> categoryRatings,
       Map<Integer, BigDecimal> categoryWeights
   ) {
@@ -96,15 +96,7 @@ public class TicketScoreCalculator {
     }
     
     // Step 3: The final ticket score is calculated as the weighted average.
-    var score = 0.0;
-    if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
-      score = 0.0;
-    } else {
-      score = weightedScoreSum
-          .divide(totalWeight, 2, RoundingMode.HALF_UP)
-          .doubleValue();
-    }
-    
+    var score = totalWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : weightedScoreSum.divide(totalWeight, 2, RoundingMode.HALF_UP);
     LOG.debug("Calculated score={} for rating={} and weights={}", score, categoryRatings, categoryWeights);
     return score;
   }

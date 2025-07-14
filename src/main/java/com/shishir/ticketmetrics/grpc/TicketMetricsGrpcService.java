@@ -143,7 +143,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
-      BigDecimal overallScore = overallScoreService.getOverallScore(startDate.toLocalDate(), endDate.toLocalDate());
+      var overallScore = overallScoreService.getOverallScore(startDate.toLocalDate(), endDate.toLocalDate());
       
       OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
           .setScore(overallScore.doubleValue())
