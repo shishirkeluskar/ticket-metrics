@@ -8,3 +8,7 @@ spring:
 grpc:
   server:
     port: 0  # Use dynamic port in tests
+
+logging:
+  level:
+    com.shishir.ticketmetrics: DEBUG

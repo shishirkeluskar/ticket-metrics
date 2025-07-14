@@ -19,10 +19,11 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_ticket_score.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_ticket_score.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class GetTicketScoreTest {
   
@@ -71,8 +72,9 @@ class GetTicketScoreTest {
   
   static Stream<Arguments> getTicketScoreTestData() {
     return Stream.of(
-        Arguments.arguments(201, 89.09d),
-        Arguments.arguments(202, 48.24d)
+        arguments(201, 89.09d),
+        arguments(202, 48.24d),
+        arguments(203, 93.10d)
     );
   }
 }
