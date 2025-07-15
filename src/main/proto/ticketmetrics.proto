@@ -44,16 +44,16 @@ message CategoryScoreTimelineEntry {
 
 // -------- 3. Ticket/Category Matrix --------
 
-message TicketCategoryMatrixRequest {
+message GetTicketCategoryScoresRequest {
   string start_date = 1; // ISO 8601 UTC format
   string end_date = 2;
 }
 
-message TicketCategoryMatrixResponse {
-  repeated TicketCategoryScoreRow ticket_scores = 1;
+message GetTicketCategoryScoresResponse {
+  repeated TicketCategoryScore ticket_scores = 1;
 }
 
-message TicketCategoryScoreRow {
+message TicketCategoryScore {
   int32 ticket_id = 1;
   map<int32, double> category_scores = 2; // key = categoryId, value = % score
 }
@@ -90,7 +90,7 @@ message PeriodScoreComparisonResponse {
 service TicketMetricsService {
   rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
   rpc GetCategoryTimelineScores (CategoryTimelineRequest) returns (CategoryTimelineResponse);
-  rpc GetTicketCategoryMatrix (TicketCategoryMatrixRequest) returns (TicketCategoryMatrixResponse);
+  rpc GetTicketCategoryScores (GetTicketCategoryScoresRequest) returns (GetTicketCategoryScoresResponse);
   rpc GetOverallQualityScore(OverallQualityScoreRequest) returns (OverallQualityScoreResponse);
   rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreComparisonResponse);
 }

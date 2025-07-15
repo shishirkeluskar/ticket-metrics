@@ -106,7 +106,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   @Override
-  public void getTicketCategoryMatrix(TicketCategoryMatrixRequest request, StreamObserver<TicketCategoryMatrixResponse> responseObserver) {
+  public void getTicketCategoryScores(GetTicketCategoryScoresRequest request, StreamObserver<GetTicketCategoryScoresResponse> responseObserver) {
     try {
       validateTicketCategoryMatrixRequest(request);
       
@@ -117,10 +117,10 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       
       Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(startDate, endDate);
       
-      TicketCategoryMatrixResponse.Builder responseBuilder = TicketCategoryMatrixResponse.newBuilder();
+      GetTicketCategoryScoresResponse.Builder responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
       
       for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
-        TicketCategoryScoreRow.Builder ticketScoreRowBuilder = TicketCategoryScoreRow.newBuilder();
+        TicketCategoryScore.Builder ticketScoreRowBuilder = TicketCategoryScore.newBuilder();
         ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
         
         for (Map.Entry<Integer, BigDecimal> categoryEntry : ticketEntry.getValue().entrySet()) {
@@ -217,7 +217,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
-  private void validateTicketCategoryMatrixRequest(TicketCategoryMatrixRequest request) {
+  private void validateTicketCategoryMatrixRequest(GetTicketCategoryScoresRequest request) {
     GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
