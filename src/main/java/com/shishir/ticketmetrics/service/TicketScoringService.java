@@ -19,11 +19,11 @@ public class TicketScoringService implements TicketScoreCalculator {
   
   private static final Logger LOG = LoggerFactory.getLogger(TicketScoringService.class);
   
-  private final TicketScoreCacheStore ticketScoreCacheStore;
+  private final TicketScoreCacheStore cacheStore;
   private final RatingDao ratingDao;
   
-  public TicketScoringService(TicketScoreCacheStore ticketScoreCacheStore, RatingDao ratingDao) {
-    this.ticketScoreCacheStore = ticketScoreCacheStore;
+  public TicketScoringService(TicketScoreCacheStore cacheStore, RatingDao ratingDao) {
+    this.cacheStore = cacheStore;
     this.ratingDao = ratingDao;
   }
   
@@ -34,7 +34,7 @@ public class TicketScoringService implements TicketScoreCalculator {
    * @return percentage score between 0 and 100
    */
   public BigDecimal getTicketScore(Integer ticketId) {
-    return ticketScoreCacheStore.getOrCalculate(ticketId, this::calculate);
+    return cacheStore.getOrCalculate(ticketId, this::calculate);
   }
   
   @Override

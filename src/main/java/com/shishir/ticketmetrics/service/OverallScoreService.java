@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
 @Service
 public class OverallScoreService implements OverallDailyScoreCalculator {
   private static final Logger LOG = LoggerFactory.getLogger(OverallScoreService.class);
-  private final OverallDailyScoreCacheStore overallDailyScoreCacheStore;
+  private final OverallDailyScoreCacheStore cacheStore;
   private final RatingDao ratingDao;
   private final RatingStatsDao ratingStatsDao;
   
-  public OverallScoreService(OverallDailyScoreCacheStore overallDailyScoreCacheStore, RatingDao ratingDao, RatingStatsDao ratingStatsDao) {
-    this.overallDailyScoreCacheStore = overallDailyScoreCacheStore;
+  public OverallScoreService(OverallDailyScoreCacheStore cacheStore, RatingDao ratingDao, RatingStatsDao ratingStatsDao) {
+    this.cacheStore = cacheStore;
     this.ratingDao = ratingDao;
     this.ratingStatsDao = ratingStatsDao;
   }
@@ -41,7 +41,7 @@ public class OverallScoreService implements OverallDailyScoreCalculator {
   
   private List<BigDecimal> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     return startDate.datesUntil(endDate.plusDays(1))
-        .map(date -> overallDailyScoreCacheStore.getOrCalculate(date, this::calculate))
+        .map(date -> cacheStore.getOrCalculate(date, this::calculate))
         .toList();
   }
   
