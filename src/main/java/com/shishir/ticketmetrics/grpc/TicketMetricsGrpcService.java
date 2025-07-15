@@ -1,6 +1,7 @@
 package com.shishir.ticketmetrics.grpc;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
+import com.shishir.ticketmetrics.grpc.support.GrpcRequestHandler;
 import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.OverallScoreService;
@@ -26,27 +27,21 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
   private final ScoreAggregationService timelineService;
+  private final GrpcRequestHandler handler;
   
   
-  public TicketMetricsGrpcService(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
+  public TicketMetricsGrpcService(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService, GrpcRequestHandler handler) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
     this.timelineService = timelineService;
+    this.handler = handler;
   }
   
   @Override
   public void getTicketScore(GetTicketScoreRequest request, StreamObserver<GetTicketScoreResponse> responseObserver) {
     try {
-      validateGetTicketScoreRequest(request);
-      var score = ticketScoreService.getTicketScore(request.getTicketId());
-      
-      var response = GetTicketScoreResponse.newBuilder()
-          .setScore(score.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
-          .build();
-      
-      responseObserver.onNext(response);
+      responseObserver.onNext(handler.handle(request));
       responseObserver.onCompleted();
-      
     } catch (StatusRuntimeException e) {
       LOG.error("Error encountered.", e);
       responseObserver.onError(e);
@@ -203,10 +198,6 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   
   private String fromLocalDateTimetoString(LocalDateTime date) {
     return date.format(FORMATTER);
-  }
-  
-  private void validateGetTicketScoreRequest(GetTicketScoreRequest request) {
-    GrpcValidationUtils.validatePositive(request.getTicketId(), "ticket_id");
   }
   
   private void validateCategoryTimelineRequest(CategoryTimelineRequest request) {
