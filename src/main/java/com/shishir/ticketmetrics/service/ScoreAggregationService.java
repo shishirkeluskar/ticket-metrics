@@ -1,10 +1,10 @@
 package com.shishir.ticketmetrics.service;
 
-import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import com.shishir.ticketmetrics.model.TimeBucket;
+import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.util.TimeBucketResolver;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -90,7 +91,7 @@ public class ScoreAggregationService {
   }
   
   @Cacheable(value = "ticketCategoryScores", key = "#ticketId + '-' + #categoryId + '-' + #start.toString() + '-' + #end.toString()")
-  public BigDecimal calculateScoreForTicketCategory(int ticketId, int categoryId, LocalDateTime start, LocalDateTime end) {
+  public BigDecimal calculateScoreForTicketCategory(int ticketId, int categoryId, LocalDate start, LocalDate end) {
     // Call mapper to get ratings for this ticket-category in period
     List<RatingWithCategoryWeight> ratings = ratingDao.findRatingsForTicketCategoryBetween(ticketId, categoryId, start, end);
     
@@ -126,7 +127,7 @@ public class ScoreAggregationService {
    * @param end   end datetime (inclusive)
    * @return map of ticketId to map of categoryId to percentage score
    */
-  public Map<Integer, Map<Integer, BigDecimal>> getScoresByTicket(LocalDateTime start, LocalDateTime end) {
+  public Map<Integer, Map<Integer, BigDecimal>> getScoresByTicket(LocalDate start, LocalDate end) {
     // Get all ticket-category pairs to calculate
     List<RatingWithCategoryWeight> allRatings = ratingDao.findRatingsForTicketsCreatedBetween(start, end);
     

@@ -10,16 +10,23 @@ import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.math.BigDecimal;
+import java.util.stream.Stream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_matrix.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_ticket_category_scores.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class GetTicketCategoryScoresTest {
   
@@ -88,5 +95,42 @@ public class GetTicketCategoryScoresTest {
       assertThat(row.getTicketId()).isGreaterThan(0);
       assertThat(row.getCategoryScoresMap()).isNotEmpty();
     }
+  }
+  
+  @ParameterizedTest
+  @MethodSource("getTicketCategoryScoresTestData")
+  void canGetTicketCategoryScores(
+      String startDate,
+      String endDate,
+      Integer ticketId,
+      Integer categoryId,
+      BigDecimal expectedScore
+  ) {
+    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest(startDate, endDate);
+    var response = grpcStub.getTicketCategoryScores(request);
+    
+    assertThat(response.getTicketScoresList()).isNotEmpty();
+  }
+  
+  static Stream<Arguments> getTicketCategoryScoresTestData() {
+    return Stream.of(
+        // ticket 1, category 1 (Spelling): rating 4, weight 1, score = 4*1/1*5*100 = 80.00 approx
+        arguments("2025-07-01T00:00:00", "2025-07-01T23:59:59", 1, 1, BigDecimal.valueOf(80.00d)),
+        
+        // ticket 1, category 2 (Grammar): rating 3, weight 0.7, score = 3*0.7/0.7*5*100 = 60.00 approx
+        arguments("2025-07-01T00:00:00", "2025-07-01T23:59:59", 1, 2, BigDecimal.valueOf(60.00)),
+        
+        // ticket 2, category 1 (Spelling): rating 5, weight 1, score = 5*1/1*5*100 = 100.00
+        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 1, BigDecimal.valueOf(100.00)),
+        
+        // ticket 2, category 3 (GDPR): rating 2, weight 1.2, score = 2*1.2/1.2*5*100 = 40.00
+        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 3, BigDecimal.valueOf(40.00)),
+        
+        // ticket 3, category 4 (Randomness): rating 4, weight 1, score = 4*1/1*5*100 = 80.00
+        arguments("2025-07-03T00:00:00", "2025-07-03T23:59:59", 3, 4, BigDecimal.valueOf(80.00)),
+        
+        // ticket 4, category 2 (Grammar): rating 1, weight 0.7, score = 1*0.7/0.7*5*100 = 20.00
+        arguments("2025-07-04T00:00:00", "2025-07-04T23:59:59", 4, 2, BigDecimal.valueOf(20.00))
+    );
   }
 }

@@ -100,7 +100,10 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       
       GrpcValidationUtils.validateDateOrder(startDate, endDate);
       
-      Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(startDate, endDate);
+      Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(
+          startDate.toLocalDate(),
+          endDate.toLocalDate()
+      );
       
       GetTicketCategoryScoresResponse.Builder responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
       
