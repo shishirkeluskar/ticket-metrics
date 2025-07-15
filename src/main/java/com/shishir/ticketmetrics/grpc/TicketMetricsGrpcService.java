@@ -137,22 +137,8 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   @Override
   public void getOverallQualityScore(OverallQualityScoreRequest request, StreamObserver<OverallQualityScoreResponse> responseObserver) {
     try {
-      validateOverallQualityScoreRequest(request);
-      
-      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
-      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
-      
-      GrpcValidationUtils.validateDateOrder(startDate, endDate);
-      
-      var overallScore = overallScoreService.getOverallScore(startDate.toLocalDate(), endDate.toLocalDate());
-      
-      OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
-          .setScore(overallScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
-          .build();
-      
-      responseObserver.onNext(response);
+      responseObserver.onNext(handler.handle(request));
       responseObserver.onCompleted();
-      
     } catch (StatusRuntimeException e) {
       LOG.error("Error encountered.", e);
       responseObserver.onError(e);
@@ -206,11 +192,6 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   }
   
   private void validateTicketCategoryMatrixRequest(GetTicketCategoryScoresRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
-    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
-  }
-  
-  private void validateOverallQualityScoreRequest(OverallQualityScoreRequest request) {
     GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
