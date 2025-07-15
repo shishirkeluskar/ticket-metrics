@@ -9,9 +9,9 @@ import java.util.Map;
 
 public class ScoreCalculator {
   private static final Logger LOG = LoggerFactory.getLogger(ScoreCalculator.class);
-  private static final BigDecimal MIN_SCALE = new BigDecimal("0.0");
-  private static final BigDecimal MAX_SCALE = new BigDecimal("5.0");
-  private static final BigDecimal HUNDRED = new BigDecimal("100.0");
+  private static final BigDecimal MIN_SCALE = BigDecimal.ZERO;
+  private static final BigDecimal MAX_SCALE = BigDecimal.valueOf(5.0d);
+  private static final BigDecimal HUNDRED = BigDecimal.valueOf(100.0d);
   
   /**
    * Calculate the weighted score of a ticket based on individual
@@ -84,7 +84,7 @@ public class ScoreCalculator {
       // Step 1: Step 1: Each rating is normalized to percentage (0 - 100) by converting
       // them from the original (0 - 5) scale.
       var normalizedScore = rating
-          .divide(MAX_SCALE, 6, RoundingMode.HALF_UP)
+          .divide(MAX_SCALE, 6, RoundingMode.HALF_EVEN)
           .multiply(HUNDRED);
       
       // Step 2: Then each normalized score is multiplied by its category's weight.

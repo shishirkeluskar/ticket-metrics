@@ -24,7 +24,7 @@ public class OverallScoreService {
     var scores = getScoresInRange(startDate, endDate);
     int count = scores.size();
     var sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    var average = count > 0 ? sum.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    var average = count > 0 ? sum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
     LOG.debug("Calculated overall score: sum={}, count={}, average={}", sum, count, average);
     return average;
   }

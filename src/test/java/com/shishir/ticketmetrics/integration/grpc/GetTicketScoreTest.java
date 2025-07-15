@@ -79,9 +79,9 @@ class GetTicketScoreTest {
   
   static Stream<Arguments> getTicketScoreTestData() {
     return Stream.of(
-        arguments(201, 89.09d),
-        arguments(202, 48.24d),
-        arguments(203, 93.10d)
+        arguments(201, 89d),
+        arguments(202, 48d),
+        arguments(203, 93d)
     );
   }
 }

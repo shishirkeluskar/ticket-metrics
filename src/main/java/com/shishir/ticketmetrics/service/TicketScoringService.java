@@ -33,9 +33,8 @@ public class TicketScoringService implements TicketScoreCalculator {
    * @param ticketId ticket ID
    * @return percentage score between 0 and 100
    */
-  public double getTicketScore(Integer ticketId) {
-    return ticketScoreCacheStore.getTicketScoreOrCalculate(ticketId, this::calculate)
-        .doubleValue();
+  public BigDecimal getTicketScore(Integer ticketId) {
+    return ticketScoreCacheStore.getTicketScoreOrCalculate(ticketId, this::calculate);
   }
   
   @Override
@@ -45,7 +44,7 @@ public class TicketScoringService implements TicketScoreCalculator {
     var ratingMap = getRatingMap(ticketId);
     var weightMap = ratingDao.getCategoryWeightMap();
     var score = ScoreCalculator.calculateScore(ratingMap, weightMap)
-        .setScale(2, RoundingMode.HALF_UP);
+        .setScale(6, RoundingMode.HALF_EVEN);
     
     LOG.debug("Calculated score={}, ticketId={}", score, ticketId);
     return score;

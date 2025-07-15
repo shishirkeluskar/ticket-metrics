@@ -10,6 +10,8 @@ import com.shishir.ticketmetrics.service.TicketScoringService;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.math.BigDecimal;
@@ -20,6 +22,7 @@ import java.util.Map;
 
 @GrpcService
 public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMetricsServiceImplBase {
+  private static final Logger LOG = LoggerFactory.getLogger(TicketMetricsGrpcService.class);
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
   private final TicketScoringService ticketScoringService;
   private final OverallScoreService overallScoreService;
@@ -38,18 +41,20 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   public void getTicketScore(GetTicketScoreRequest request, StreamObserver<GetTicketScoreResponse> responseObserver) {
     try {
       validateGetTicketScoreRequest(request);
-      double score = ticketScoringService.getTicketScore(request.getTicketId());
+      var score = ticketScoringService.getTicketScore(request.getTicketId());
       
       var response = GetTicketScoreResponse.newBuilder()
-          .setScore(score)
+          .setScore(score.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
           .build();
       
       responseObserver.onNext(response);
       responseObserver.onCompleted();
       
     } catch (StatusRuntimeException e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(e);
     } catch (Exception e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
@@ -92,8 +97,10 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       responseObserver.onNext(responseBuilder.build());
       responseObserver.onCompleted();
     } catch (StatusRuntimeException e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(e);
     } catch (Exception e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
@@ -127,8 +134,10 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       responseObserver.onCompleted();
       
     } catch (StatusRuntimeException e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(e);
     } catch (Exception e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
@@ -146,15 +155,17 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       var overallScore = overallScoreService.getOverallScore(startDate.toLocalDate(), endDate.toLocalDate());
       
       OverallQualityScoreResponse response = OverallQualityScoreResponse.newBuilder()
-          .setScore(overallScore.doubleValue())
+          .setScore(overallScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
           .build();
       
       responseObserver.onNext(response);
       responseObserver.onCompleted();
       
     } catch (StatusRuntimeException e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(e);
     } catch (Exception e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
@@ -172,21 +183,23 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       GrpcValidationUtils.validateDateOrder(currentStartDate, currentEndDate);
       GrpcValidationUtils.validateDateOrder(previousStartDate, previousEndDate);
       
-      BigDecimal currentScore = overallScoreService.getOverallScore(currentStartDate.toLocalDate(), currentEndDate.toLocalDate());
-      BigDecimal previousScore = overallScoreService.getOverallScore(previousStartDate.toLocalDate(), previousEndDate.toLocalDate());
-      BigDecimal change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
+      var currentScore = overallScoreService.getOverallScore(currentStartDate.toLocalDate(), currentEndDate.toLocalDate());
+      var previousScore = overallScoreService.getOverallScore(previousStartDate.toLocalDate(), previousEndDate.toLocalDate());
+      var change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
       
       PeriodScoreComparisonResponse response = PeriodScoreComparisonResponse.newBuilder()
-          .setCurrentPeriodScore(currentScore.doubleValue())
-          .setPreviousPeriodScore(previousScore.doubleValue())
-          .setScoreChange(change.doubleValue())
+          .setCurrentPeriodScore(currentScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+          .setPreviousPeriodScore(previousScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+          .setScoreChange(change.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
           .build();
       
       responseObserver.onNext(response);
       responseObserver.onCompleted();
     } catch (StatusRuntimeException e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(e);
     } catch (Exception e) {
+      LOG.error("Error encountered.", e);
       responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }

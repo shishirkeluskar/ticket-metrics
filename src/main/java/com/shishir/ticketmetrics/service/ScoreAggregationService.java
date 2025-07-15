@@ -77,7 +77,7 @@ public class ScoreAggregationService {
       for (Map.Entry<LocalDateTime, List<BigDecimal>> dateEntry : categoryEntry.getValue().entrySet()) {
         List<BigDecimal> scores = dateEntry.getValue();
         BigDecimal sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal avg = sum.divide(BigDecimal.valueOf(scores.size()), 4, RoundingMode.HALF_UP);
+        BigDecimal avg = sum.divide(BigDecimal.valueOf(scores.size()), 6, RoundingMode.HALF_UP);
         BigDecimal percent = avg.multiply(BigDecimal.valueOf(100))
             .divide(BigDecimal.valueOf(5), 2, RoundingMode.HALF_UP);
         summary.addScore(dateEntry.getKey(), percent, scores.size());
@@ -111,7 +111,7 @@ public class ScoreAggregationService {
     
     BigDecimal maxPossible = totalWeight.multiply(BigDecimal.valueOf(5));
     return weightedSum.multiply(BigDecimal.valueOf(100))
-        .divide(maxPossible, 2, RoundingMode.HALF_UP);
+        .divide(maxPossible, 6, RoundingMode.HALF_UP);
   }
   
   /**
