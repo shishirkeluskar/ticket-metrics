@@ -32,10 +32,24 @@ public class GrpcTestUtil {
         .build();
   }
   
-  public static PeriodScoreComparisonRequest buildComparePeriodScoresRequest(String currentStartDate, String currentEndDate) {
+  public static OverallQualityScoreRequest buildOverallQualityScoreRequest(String startDate, String endDate) {
+    return OverallQualityScoreRequest.newBuilder()
+        .setStartDate(startDate)
+        .setEndDate(endDate)
+        .build();
+  }
+  
+  public static PeriodScoreComparisonRequest buildComparePeriodScoresRequest(
+      String currentStartDate,
+      String currentEndDate,
+      String previousStartDate,
+      String previousEndDate
+  ) {
     return PeriodScoreComparisonRequest.newBuilder()
         .setCurrentStartDate(currentStartDate)
         .setCurrentEndDate(currentEndDate)
+        .setPreviousStartDate(previousStartDate)
+        .setPreviousEndDate(previousEndDate)
         .build();
   }
   

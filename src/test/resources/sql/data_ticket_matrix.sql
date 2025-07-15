@@ -1,3 +1,4 @@
+-- Clear old data
 DELETE FROM ratings;
 DELETE FROM tickets;
 DELETE FROM users;

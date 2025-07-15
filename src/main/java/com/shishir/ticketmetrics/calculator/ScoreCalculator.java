@@ -7,11 +7,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
-public class TicketScoreCalculator {
-  private static final Logger LOG = LoggerFactory.getLogger(TicketScoreCalculator.class);
-  private static final BigDecimal MIN_SCALE = new BigDecimal("0.0");
-  private static final BigDecimal MAX_SCALE = new BigDecimal("5.0");
-  private static final BigDecimal HUNDRED = new BigDecimal("100.0");
+public class ScoreCalculator {
+  private static final Logger LOG = LoggerFactory.getLogger(ScoreCalculator.class);
+  private static final BigDecimal MIN_SCALE = BigDecimal.ZERO;
+  private static final BigDecimal MAX_SCALE = BigDecimal.valueOf(5.0d);
+  private static final BigDecimal HUNDRED = BigDecimal.valueOf(100.0d);
   
   /**
    * Calculate the weighted score of a ticket based on individual
@@ -65,7 +65,7 @@ public class TicketScoreCalculator {
    * @param categoryWeights Map of categoryId → weight (integer > 0)
    * @return score as percentage (0–100), rounded to 2 decimals
    */
-  public static double calculateScore(
+  public static BigDecimal calculateScore(
       Map<Integer, BigDecimal> categoryRatings,
       Map<Integer, BigDecimal> categoryWeights
   ) {
@@ -84,7 +84,7 @@ public class TicketScoreCalculator {
       // Step 1: Step 1: Each rating is normalized to percentage (0 - 100) by converting
       // them from the original (0 - 5) scale.
       var normalizedScore = rating
-          .divide(MAX_SCALE, 6, RoundingMode.HALF_UP)
+          .divide(MAX_SCALE, 6, RoundingMode.HALF_EVEN)
           .multiply(HUNDRED);
       
       // Step 2: Then each normalized score is multiplied by its category's weight.
@@ -96,15 +96,7 @@ public class TicketScoreCalculator {
     }
     
     // Step 3: The final ticket score is calculated as the weighted average.
-    var score = 0.0;
-    if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
-      score = 0.0;
-    } else {
-      score = weightedScoreSum
-          .divide(totalWeight, 2, RoundingMode.HALF_UP)
-          .doubleValue();
-    }
-    
+    var score = totalWeight.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : weightedScoreSum.divide(totalWeight, 2, RoundingMode.HALF_UP);
     LOG.debug("Calculated score={} for rating={} and weights={}", score, categoryRatings, categoryWeights);
     return score;
   }
@@ -112,7 +104,6 @@ public class TicketScoreCalculator {
   private static void validate(Integer categoryId, BigDecimal rating, Map<Integer, BigDecimal> categoryWeights) {
     requireRatingNotNull(categoryId, rating);
     requireRatingWithinBounds(categoryId, rating);
-    // requireWeightForCategory(categoryId, categoryWeights);
   }
   
   private static void requireRatingNotNull(Integer categoryId, BigDecimal rating) {
@@ -128,14 +119,6 @@ public class TicketScoreCalculator {
       throw new IllegalArgumentException(
           String.format("Rating=%d is out bounds for categoryId=%s. Bounds %s to %s."
               .formatted(rating, categoryId, MIN_SCALE, MAX_SCALE))
-      );
-    }
-  }
-  
-  private static void requireWeightForCategory(Integer categoryId, Map<Integer, BigDecimal> categoryWeights) {
-    if (!categoryWeights.containsKey(categoryId)) {
-      throw new IllegalArgumentException(
-          String.format("Missing weight for categoryId=%d".formatted(categoryId))
       );
     }
   }

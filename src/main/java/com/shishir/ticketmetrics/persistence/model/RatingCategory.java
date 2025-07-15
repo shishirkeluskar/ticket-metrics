@@ -1,4 +1,4 @@
-package com.shishir.ticketmetrics.model;
+package com.shishir.ticketmetrics.persistence.model;
 
 import java.math.BigDecimal;
 

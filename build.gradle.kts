@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:${property("mybatisSpringBootVersion")}")
     implementation("org.xerial:sqlite-jdbc:3.50.2.0")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${property("mybatisSpringBootVersion")}")

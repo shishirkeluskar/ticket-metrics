@@ -26,10 +26,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_ticket_score.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_overall_quality_score.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-class GetTicketScoreTest {
-  
+public class GetOverallQualityScoreTest {
   @LocalGrpcPort
   int port;
   
@@ -53,36 +52,53 @@ class GetTicketScoreTest {
   
   @Test
   void shouldFail_whenEmptyRequest() {
-    assertThatThrownBy(() -> grpcStub.getTicketScore(null))
+    assertThatThrownBy(() -> grpcStub.getOverallQualityScore(null))
         .isInstanceOf(StatusRuntimeException.class)
-        .hasMessageContaining("INVALID_ARGUMENT: ticket_id must be a positive number");
+        .hasMessageContaining("INVALID_ARGUMENT: start_date must not be blank");
   }
   
   @Test
-  void shouldFail_whenTicketIdInvalid() {
-    var request = GrpcTestUtil.buildGetTicketScoreRequest(0);
+  void shouldFail_whenInvalidStartDate() {
+    var request = GrpcTestUtil.buildOverallQualityScoreRequest("incorrect-start-date", "2025-07-04T00:00:00");
     
-    assertThatThrownBy(() -> grpcStub.getTicketScore(request))
+    assertThatThrownBy(() -> grpcStub.getOverallQualityScore(request))
         .isInstanceOf(StatusRuntimeException.class)
-        .hasMessageContaining("INVALID_ARGUMENT: ticket_id must be a positive number");
+        .hasMessageContaining("INVALID_ARGUMENT: start_date must be in ISO date-time format but was incorrect-start-date");
+  }
+  
+  @Test
+  void shouldFail_whenInvalidEndDate() {
+    var request = GrpcTestUtil.buildOverallQualityScoreRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    
+    assertThatThrownBy(() -> grpcStub.getOverallQualityScore(request))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("INVALID_ARGUMENT: end_date must be in ISO date-time format but was incorrect-end-date");
+  }
+  
+  @Test
+  void shouldFail_whenInvalidDateOrder() {
+    var request = GrpcTestUtil.buildOverallQualityScoreRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    
+    assertThatThrownBy(() -> grpcStub.getOverallQualityScore(request))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
   }
   
   @ParameterizedTest()
-  @MethodSource("getTicketScoreTestData")
-  void canGetTicketScore(Integer ticketId, double expectedScore) {
-    var request = GrpcTestUtil.buildGetTicketScoreRequest(ticketId);
+  @MethodSource("getOverallQualityScoreTestData")
+  void canGetOverallQualityScore(String startDate, String endDate, double expectedScore) {
+    var request = GrpcTestUtil.buildOverallQualityScoreRequest(startDate, endDate);
     
-    var response = grpcStub.getTicketScore(request);
+    var response = grpcStub.getOverallQualityScore(request);
     
     assertThat(response.getScore()).isEqualTo(expectedScore);
   }
   
-  static Stream<Arguments> getTicketScoreTestData() {
+  static Stream<Arguments> getOverallQualityScoreTestData() {
     return Stream.of(
-        arguments(201, 89d),
-        arguments(202, 48d),
-        arguments(203, 93d)
+        arguments("2025-07-01T00:00:00", "2025-07-01T00:00:00", 70d),
+        arguments("2025-07-02T00:00:00", "2025-07-02T00:00:00", 93d),
+        arguments("2025-07-01T00:00:00", "2025-07-02T00:00:00", 82d)
     );
   }
 }
-

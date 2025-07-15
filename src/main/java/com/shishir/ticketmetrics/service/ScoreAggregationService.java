@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.service;
 
-import com.shishir.ticketmetrics.mapper.RatingMapper;
+import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.model.RatingWithCategory;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
@@ -12,16 +12,15 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 public class ScoreAggregationService {
-  private final RatingMapper ratingMapper;
+  private final RatingDao ratingDao;
   
-  public ScoreAggregationService(RatingMapper ratingMapper) {
-    this.ratingMapper = ratingMapper;
+  public ScoreAggregationService(RatingDao ratingDao) {
+    this.ratingDao = ratingDao;
   }
   
   /**
@@ -54,7 +53,7 @@ public class ScoreAggregationService {
   public Map<Integer, CategoryScoreSummary> getCategoryScoresOverTime(LocalDateTime startDate, LocalDateTime endDate) {
     TimeBucket bucket = TimeBucketResolver.resolve(startDate, endDate);
     
-    List<RatingWithCategory> ratings = ratingMapper.findRatingsInRange(startDate, endDate);
+    List<RatingWithCategory> ratings = ratingDao.findRatingsInRange(startDate, endDate);
     
     Map<Integer, Map<LocalDateTime, List<BigDecimal>>> grouped = new LinkedHashMap<>();
     
@@ -78,7 +77,7 @@ public class ScoreAggregationService {
       for (Map.Entry<LocalDateTime, List<BigDecimal>> dateEntry : categoryEntry.getValue().entrySet()) {
         List<BigDecimal> scores = dateEntry.getValue();
         BigDecimal sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal avg = sum.divide(BigDecimal.valueOf(scores.size()), 4, RoundingMode.HALF_UP);
+        BigDecimal avg = sum.divide(BigDecimal.valueOf(scores.size()), 6, RoundingMode.HALF_UP);
         BigDecimal percent = avg.multiply(BigDecimal.valueOf(100))
             .divide(BigDecimal.valueOf(5), 2, RoundingMode.HALF_UP);
         summary.addScore(dateEntry.getKey(), percent, scores.size());
@@ -93,7 +92,7 @@ public class ScoreAggregationService {
   @Cacheable(value = "ticketCategoryScores", key = "#ticketId + '-' + #categoryId + '-' + #start.toString() + '-' + #end.toString()")
   public BigDecimal calculateScoreForTicketCategory(int ticketId, int categoryId, LocalDateTime start, LocalDateTime end) {
     // Call mapper to get ratings for this ticket-category in period
-    List<RatingWithCategoryWeight> ratings = ratingMapper.findRatingsForTicketCategoryBetween(ticketId, categoryId, start, end);
+    List<RatingWithCategoryWeight> ratings = ratingDao.findRatingsForTicketCategoryBetween(ticketId, categoryId, start, end);
     
     BigDecimal totalWeight = BigDecimal.ZERO;
     BigDecimal weightedSum = BigDecimal.ZERO;
@@ -112,7 +111,7 @@ public class ScoreAggregationService {
     
     BigDecimal maxPossible = totalWeight.multiply(BigDecimal.valueOf(5));
     return weightedSum.multiply(BigDecimal.valueOf(100))
-        .divide(maxPossible, 2, RoundingMode.HALF_UP);
+        .divide(maxPossible, 6, RoundingMode.HALF_UP);
   }
   
   /**
@@ -129,7 +128,7 @@ public class ScoreAggregationService {
    */
   public Map<Integer, Map<Integer, BigDecimal>> getScoresByTicket(LocalDateTime start, LocalDateTime end) {
     // Get all ticket-category pairs to calculate
-    List<RatingWithCategoryWeight> allRatings = ratingMapper.findRatingsForTicketsCreatedBetween(start, end);
+    List<RatingWithCategoryWeight> allRatings = ratingDao.findRatingsForTicketsCreatedBetween(start, end);
     
     // Collect distinct ticketId-categoryId pairs
     var ticketCategoryPairs = allRatings.stream()
@@ -149,54 +148,6 @@ public class ScoreAggregationService {
     }
     
     return result;
-  }
-  
-  public BigDecimal getOverallScore(LocalDateTime start, LocalDateTime end) {
-    // Fetch all ratings weighted by category weights between dates
-    List<RatingWithCategoryWeight> ratings = ratingMapper.findRatingsCreatedBetween(start, end);
-    
-    BigDecimal weightedSum = BigDecimal.ZERO;
-    BigDecimal totalWeight = BigDecimal.ZERO;
-    BigDecimal maxRating = BigDecimal.valueOf(5);
-    
-    for (RatingWithCategoryWeight rating : ratings) {
-      BigDecimal weightedRating = rating.rating().multiply(rating.weight());
-      weightedSum = weightedSum.add(weightedRating);
-      totalWeight = totalWeight.add(rating.weight().multiply(maxRating));
-    }
-    
-    if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
-      return BigDecimal.ZERO;
-    }
-    
-    // Calculate percentage score
-    return weightedSum.multiply(BigDecimal.valueOf(100)).divide(totalWeight, 2, RoundingMode.HALF_UP);
-  }
-  
-  /**
-   * Calculates the overall score change between the current period and the previous period.
-   * Previous period is assumed to be same length immediately before current period.
-   *
-   * @param currentStart start datetime of the current period (inclusive)
-   * @param currentEnd   end datetime of the current period (exclusive)
-   * @return a Triple of (currentScore, previousScore, change)
-   */
-  public PeriodScoreChange calculatePeriodOverPeriodChange(LocalDateTime currentStart, LocalDateTime currentEnd) {
-    // Calculate previous period based on current period duration
-    Duration periodDuration = Duration.between(currentStart, currentEnd);
-    LocalDateTime previousStart = currentStart.minus(periodDuration);
-    LocalDateTime previousEnd = currentStart;
-    
-    BigDecimal currentScore = getOverallScore(currentStart, currentEnd);
-    BigDecimal previousScore = getOverallScore(previousStart, previousEnd);
-    
-    BigDecimal change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
-    
-    return new PeriodScoreChange(currentScore, previousScore, change);
-  }
-  
-  // A simple DTO to hold the 3 values
-  public static record PeriodScoreChange(BigDecimal currentScore, BigDecimal previousScore, BigDecimal change) {
   }
   
   private LocalDateTime toBucketDate(LocalDateTime ts, TimeBucket bucket) {
