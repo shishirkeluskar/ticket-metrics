@@ -15,14 +15,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class TicketScoringService implements TicketScoreCalculator {
+public class TicketScoreService implements TicketScoreCalculator {
   
-  private static final Logger LOG = LoggerFactory.getLogger(TicketScoringService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TicketScoreService.class);
   
   private final TicketScoreCacheStore cacheStore;
   private final RatingDao ratingDao;
   
-  public TicketScoringService(TicketScoreCacheStore cacheStore, RatingDao ratingDao) {
+  public TicketScoreService(TicketScoreCacheStore cacheStore, RatingDao ratingDao) {
     this.cacheStore = cacheStore;
     this.ratingDao = ratingDao;
   }

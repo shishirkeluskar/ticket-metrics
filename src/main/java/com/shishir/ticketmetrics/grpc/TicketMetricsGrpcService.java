@@ -5,7 +5,7 @@ import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
-import com.shishir.ticketmetrics.service.TicketScoringService;
+import com.shishir.ticketmetrics.service.TicketScoreService;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -23,13 +23,13 @@ import java.util.Map;
 public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMetricsServiceImplBase {
   private static final Logger LOG = LoggerFactory.getLogger(TicketMetricsGrpcService.class);
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
-  private final TicketScoringService ticketScoringService;
+  private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
   private final ScoreAggregationService timelineService;
   
   
-  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
-    this.ticketScoringService = ticketScoreService;
+  public TicketMetricsGrpcService(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
+    this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
     this.timelineService = timelineService;
   }
@@ -38,7 +38,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   public void getTicketScore(GetTicketScoreRequest request, StreamObserver<GetTicketScoreResponse> responseObserver) {
     try {
       validateGetTicketScoreRequest(request);
-      var score = ticketScoringService.getTicketScore(request.getTicketId());
+      var score = ticketScoreService.getTicketScore(request.getTicketId());
       
       var response = GetTicketScoreResponse.newBuilder()
           .setScore(score.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
