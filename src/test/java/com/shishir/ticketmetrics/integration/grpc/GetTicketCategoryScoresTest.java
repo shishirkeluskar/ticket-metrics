@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @IntegrationTest
 @Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_matrix.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class GetTicketCategoryMatrixTest {
+public class GetTicketCategoryScoresTest {
   
   @LocalGrpcPort
   int port;
@@ -49,7 +49,7 @@ public class GetTicketCategoryMatrixTest {
   
   @Test
   void shouldFail_whenInvalidStartDate() {
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest("incorrect-start-date", "2025-07-04T00:00:00");
+    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("incorrect-start-date", "2025-07-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -58,7 +58,7 @@ public class GetTicketCategoryMatrixTest {
   
   @Test
   void shouldFail_whenInvalidEndDate() {
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("2025-07-04T00:00:00", "incorrect-end-date");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -67,7 +67,7 @@ public class GetTicketCategoryMatrixTest {
   
   @Test
   void shouldFail_whenInvalidDateOrder() {
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -79,7 +79,7 @@ public class GetTicketCategoryMatrixTest {
     var startDate = "2025-07-01T00:00:00";
     var endDate = "2025-07-02T00:00:00";
     
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest(startDate, endDate);
+    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest(startDate, endDate);
     
     GetTicketCategoryScoresResponse response = grpcStub.getTicketCategoryScores(request);
     
