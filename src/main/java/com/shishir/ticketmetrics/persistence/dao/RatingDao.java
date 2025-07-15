@@ -35,13 +35,6 @@ public interface RatingDao {
   List<RatingCategory> fetchRatingCategories();
   
   @Select("""
-          SELECT *
-          FROM ratings
-          WHERE DATE(created_at) = #{ratingDate}
-      """)
-  List<Rating> fetchRatingsByRatingDate(@Param("ratingDate") LocalDate ratingDate);
-  
-  @Select("""
           SELECT r.rating_category_id AS category_id,
                  r.rating,
                  r.created_at AS timestamp
