@@ -4,9 +4,7 @@ import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.grpc.support.GrpcRequestHandler;
 import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
-import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
-import com.shishir.ticketmetrics.service.TicketScoreService;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -23,15 +21,11 @@ import java.util.Map;
 public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMetricsServiceImplBase {
   private static final Logger LOG = LoggerFactory.getLogger(TicketMetricsGrpcService.class);
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
-  private final TicketScoreService ticketScoreService;
-  private final OverallScoreService overallScoreService;
   private final ScoreAggregationService timelineService;
   private final GrpcRequestHandler handler;
   
   
-  public TicketMetricsGrpcService(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService, GrpcRequestHandler handler) {
-    this.ticketScoreService = ticketScoreService;
-    this.overallScoreService = overallScoreService;
+  public TicketMetricsGrpcService(ScoreAggregationService timelineService, GrpcRequestHandler handler) {
     this.timelineService = timelineService;
     this.handler = handler;
   }
