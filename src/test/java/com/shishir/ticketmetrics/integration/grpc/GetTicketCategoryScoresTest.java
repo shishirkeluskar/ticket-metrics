@@ -17,7 +17,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -102,35 +104,79 @@ public class GetTicketCategoryScoresTest {
   void canGetTicketCategoryScores(
       String startDate,
       String endDate,
-      Integer ticketId,
-      Integer categoryId,
-      BigDecimal expectedScore
+      List<Expected> expectedList
   ) {
     var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest(startDate, endDate);
     var response = grpcStub.getTicketCategoryScores(request);
     
     assertThat(response.getTicketScoresList()).isNotEmpty();
+    
+    List<Integer> expectedTicketIds = expectedList.stream().map(it -> it.ticketId).toList();
+    List<Integer> actualTicketIds = response.getTicketScoresList()
+        .stream()
+        .map(TicketCategoryScore::getTicketId)
+        .toList();
+    
+    assertThat(actualTicketIds).containsExactlyInAnyOrderElementsOf(expectedTicketIds);
+    
+    
+    for (var ticketId : expectedTicketIds) {
+      var ticketScore = response.getTicketScoresList()
+          .stream()
+          .filter(t -> t.getTicketId() == ticketId)
+          .findFirst()
+          .orElseThrow(() -> new AssertionError("TicketId " + ticketId + " not found in response"));
+      
+      var actualCategoryScores = ticketScore.getCategoryScoresMap();
+      var expectedCategoryScores = expectedList.stream()
+          .filter(it -> Objects.equals(it.ticketId, ticketId))
+          .findFirst()
+          .orElseThrow(() -> new AssertionError("TicketId " + ticketId + " not found in response"))
+          .categoryScores;
+      
+      assertThat(actualCategoryScores).containsExactlyInAnyOrderEntriesOf(expectedCategoryScores);
+    }
   }
   
   static Stream<Arguments> getTicketCategoryScoresTestData() {
     return Stream.of(
         // ticket 1, category 1 (Spelling): rating 4, weight 1, score = 4*1/1*5*100 = 80.00 approx
-        arguments("2025-07-01T00:00:00", "2025-07-01T23:59:59", 1, 1, BigDecimal.valueOf(80.00d)),
-        
-        // ticket 1, category 2 (Grammar): rating 3, weight 0.7, score = 3*0.7/0.7*5*100 = 60.00 approx
-        arguments("2025-07-01T00:00:00", "2025-07-01T23:59:59", 1, 2, BigDecimal.valueOf(60.00)),
-        
-        // ticket 2, category 1 (Spelling): rating 5, weight 1, score = 5*1/1*5*100 = 100.00
-        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 1, BigDecimal.valueOf(100.00)),
-        
-        // ticket 2, category 3 (GDPR): rating 2, weight 1.2, score = 2*1.2/1.2*5*100 = 40.00
-        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 3, BigDecimal.valueOf(40.00)),
-        
-        // ticket 3, category 4 (Randomness): rating 4, weight 1, score = 4*1/1*5*100 = 80.00
-        arguments("2025-07-03T00:00:00", "2025-07-03T23:59:59", 3, 4, BigDecimal.valueOf(80.00)),
-        
-        // ticket 4, category 2 (Grammar): rating 1, weight 0.7, score = 1*0.7/0.7*5*100 = 20.00
-        arguments("2025-07-04T00:00:00", "2025-07-04T23:59:59", 4, 2, BigDecimal.valueOf(20.00))
+        arguments("2025-07-01T00:00:00", "2025-07-02T23:59:59",
+            List.of(
+                Expected.of(1, Map.of(
+                    1, 80d,
+                    2, 60d
+                )),
+                Expected.of(2, Map.of(
+                    1, 100d,
+                    3, 40d
+                ))
+            )
+        )
+
+//        // ticket 1, category 2 (Grammar): rating 3, weight 0.7, score = 3*0.7/0.7*5*100 = 60.00 approx
+//        arguments("2025-07-01T00:00:00", "2025-07-01T23:59:59", 1, 2, BigDecimal.valueOf(60.00)),
+//
+//        // ticket 2, category 1 (Spelling): rating 5, weight 1, score = 5*1/1*5*100 = 100.00
+//        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 1, BigDecimal.valueOf(100.00)),
+//
+//        // ticket 2, category 3 (GDPR): rating 2, weight 1.2, score = 2*1.2/1.2*5*100 = 40.00
+//        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 3, BigDecimal.valueOf(40.00)),
+//
+//        // ticket 3, category 4 (Randomness): rating 4, weight 1, score = 4*1/1*5*100 = 80.00
+//        arguments("2025-07-03T00:00:00", "2025-07-03T23:59:59", 3, 4, BigDecimal.valueOf(80.00)),
+//
+//        // ticket 4, category 2 (Grammar): rating 1, weight 0.7, score = 1*0.7/0.7*5*100 = 20.00
+//        arguments("2025-07-04T00:00:00", "2025-07-04T23:59:59", 4, 2, BigDecimal.valueOf(20.00))
     );
+  }
+  
+  private record Expected(
+      Integer ticketId,
+      Map<Integer, Double> categoryScores
+  ) {
+    public static Expected of(Integer ticketId, Map<Integer, Double> categoryScores) {
+      return new Expected(ticketId, categoryScores);
+    }
   }
 }
