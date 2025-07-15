@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -151,27 +150,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   @Override
   public void comparePeriodScores(PeriodScoreComparisonRequest request, StreamObserver<PeriodScoreComparisonResponse> responseObserver) {
     try {
-      validatePeriodScoreComparisonRequest(request);
-      
-      var currentStartDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentStartDate(), "current_start_date");
-      var currentEndDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentEndDate(), "current_end_date");
-      var previousStartDate = GrpcValidationUtils.parseIsoDateTime(request.getPreviousStartDate(), "previous_start_date");
-      var previousEndDate = GrpcValidationUtils.parseIsoDateTime(request.getPreviousEndDate(), "previous_end_date");
-      
-      GrpcValidationUtils.validateDateOrder(currentStartDate, currentEndDate);
-      GrpcValidationUtils.validateDateOrder(previousStartDate, previousEndDate);
-      
-      var currentScore = overallScoreService.getOverallScore(currentStartDate.toLocalDate(), currentEndDate.toLocalDate());
-      var previousScore = overallScoreService.getOverallScore(previousStartDate.toLocalDate(), previousEndDate.toLocalDate());
-      var change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
-      
-      PeriodScoreComparisonResponse response = PeriodScoreComparisonResponse.newBuilder()
-          .setCurrentPeriodScore(currentScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
-          .setPreviousPeriodScore(previousScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
-          .setScoreChange(change.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
-          .build();
-      
-      responseObserver.onNext(response);
+      responseObserver.onNext(handler.handle(request));
       responseObserver.onCompleted();
     } catch (StatusRuntimeException e) {
       LOG.error("Error encountered.", e);
@@ -194,12 +173,5 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   private void validateTicketCategoryMatrixRequest(GetTicketCategoryScoresRequest request) {
     GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
-  }
-  
-  private void validatePeriodScoreComparisonRequest(PeriodScoreComparisonRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getCurrentStartDate(), "current_start_date");
-    GrpcValidationUtils.validateNotBlank(request.getCurrentEndDate(), "current_end_date");
-    GrpcValidationUtils.validateNotBlank(request.getPreviousStartDate(), "previous_start_date");
-    GrpcValidationUtils.validateNotBlank(request.getPreviousEndDate(), "previous_end_date");
   }
 }

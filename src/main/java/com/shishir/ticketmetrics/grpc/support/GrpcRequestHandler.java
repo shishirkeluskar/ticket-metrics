@@ -1,9 +1,6 @@
 package com.shishir.ticketmetrics.grpc.support;
 
-import com.shishir.ticketmetrics.generated.grpc.GetTicketScoreRequest;
-import com.shishir.ticketmetrics.generated.grpc.GetTicketScoreResponse;
-import com.shishir.ticketmetrics.generated.grpc.OverallQualityScoreRequest;
-import com.shishir.ticketmetrics.generated.grpc.OverallQualityScoreResponse;
+import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
 import org.springframework.stereotype.Component;
@@ -49,6 +46,29 @@ public class GrpcRequestHandler {
         .build();
   }
   
+  public PeriodScoreComparisonResponse handle(PeriodScoreComparisonRequest request) {
+    // Validate
+    validatePeriodScoreComparisonRequest(request);
+    var currentStartDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentStartDate(), "current_start_date");
+    var currentEndDate = GrpcValidationUtils.parseIsoDateTime(request.getCurrentEndDate(), "current_end_date");
+    var previousStartDate = GrpcValidationUtils.parseIsoDateTime(request.getPreviousStartDate(), "previous_start_date");
+    var previousEndDate = GrpcValidationUtils.parseIsoDateTime(request.getPreviousEndDate(), "previous_end_date");
+    GrpcValidationUtils.validateDateOrder(currentStartDate, currentEndDate);
+    GrpcValidationUtils.validateDateOrder(previousStartDate, previousEndDate);
+    
+    // Process
+    var currentScore = overallScoreService.getOverallScore(currentStartDate.toLocalDate(), currentEndDate.toLocalDate());
+    var previousScore = overallScoreService.getOverallScore(previousStartDate.toLocalDate(), previousEndDate.toLocalDate());
+    var change = currentScore.subtract(previousScore).setScale(2, RoundingMode.HALF_UP);
+    
+    // Build response
+    return PeriodScoreComparisonResponse.newBuilder()
+        .setCurrentPeriodScore(currentScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+        .setPreviousPeriodScore(previousScore.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+        .setScoreChange(change.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+        .build();
+  }
+  
   private void validateGetTicketScoreRequest(GetTicketScoreRequest request) {
     GrpcValidationUtils.validatePositive(request.getTicketId(), "ticket_id");
   }
@@ -56,5 +76,12 @@ public class GrpcRequestHandler {
   private void validateOverallQualityScoreRequest(OverallQualityScoreRequest request) {
     GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
+  }
+  
+  private void validatePeriodScoreComparisonRequest(PeriodScoreComparisonRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getCurrentStartDate(), "current_start_date");
+    GrpcValidationUtils.validateNotBlank(request.getCurrentEndDate(), "current_end_date");
+    GrpcValidationUtils.validateNotBlank(request.getPreviousStartDate(), "previous_start_date");
+    GrpcValidationUtils.validateNotBlank(request.getPreviousEndDate(), "previous_end_date");
   }
 }
