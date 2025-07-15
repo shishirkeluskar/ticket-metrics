@@ -2,7 +2,7 @@ package com.shishir.ticketmetrics.service;
 
 import com.shishir.ticketmetrics.cache.store.OverallDailyScoreCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
-import com.shishir.ticketmetrics.calculator.fn.OverallDailyScoreCalculator;
+import com.shishir.ticketmetrics.cache.fn.OverallDailyScoreCalculator;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.dao.RatingStatsDao;
 import org.slf4j.Logger;

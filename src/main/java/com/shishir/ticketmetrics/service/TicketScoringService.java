@@ -1,8 +1,8 @@
 package com.shishir.ticketmetrics.service;
 
+import com.shishir.ticketmetrics.cache.fn.TicketScoreCalculator;
 import com.shishir.ticketmetrics.cache.store.TicketScoreCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
-import com.shishir.ticketmetrics.calculator.fn.TicketScoreCalculator;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.model.Rating;
 import org.slf4j.Logger;

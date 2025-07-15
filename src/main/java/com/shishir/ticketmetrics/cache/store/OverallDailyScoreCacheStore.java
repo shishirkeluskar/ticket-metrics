@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.cache.store;
 
-import com.shishir.ticketmetrics.calculator.fn.OverallDailyScoreCalculator;
+import com.shishir.ticketmetrics.cache.fn.OverallDailyScoreCalculator;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 

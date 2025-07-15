@@ -1,4 +1,4 @@
-package com.shishir.ticketmetrics.calculator.fn;
+package com.shishir.ticketmetrics.cache.fn;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
