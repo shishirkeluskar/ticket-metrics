@@ -34,7 +34,7 @@ public class TicketScoringService implements TicketScoreCalculator {
    * @return percentage score between 0 and 100
    */
   public BigDecimal getTicketScore(Integer ticketId) {
-    return ticketScoreCacheStore.getScoreOrCalculate(ticketId, this::calculate);
+    return ticketScoreCacheStore.getOrCalculate(ticketId, this::calculate);
   }
   
   @Override

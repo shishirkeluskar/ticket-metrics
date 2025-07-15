@@ -41,7 +41,7 @@ public class OverallScoreService implements OverallDailyScoreCalculator {
   
   private List<BigDecimal> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     return startDate.datesUntil(endDate.plusDays(1))
-        .map(date -> overallDailyScoreCacheStore.getScoreOrCalculate(date, this::calculate))
+        .map(date -> overallDailyScoreCacheStore.getOrCalculate(date, this::calculate))
         .toList();
   }
   
