@@ -3,7 +3,6 @@ package com.shishir.ticketmetrics.grpc;
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
-import com.shishir.ticketmetrics.service.ComparePeriodService;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoringService;
@@ -26,14 +25,12 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
   private final TicketScoringService ticketScoringService;
   private final OverallScoreService overallScoreService;
-  private final ComparePeriodService comparePeriodService;
   private final ScoreAggregationService timelineService;
   
   
-  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, OverallScoreService overallScoreService, ComparePeriodService comparePeriodService, ScoreAggregationService timelineService) {
+  public TicketMetricsGrpcService(TicketScoringService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
     this.ticketScoringService = ticketScoreService;
     this.overallScoreService = overallScoreService;
-    this.comparePeriodService = comparePeriodService;
     this.timelineService = timelineService;
   }
   
