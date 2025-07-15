@@ -4,6 +4,7 @@ import com.shishir.ticketmetrics.cache.store.OverallDailyScoreCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
 import com.shishir.ticketmetrics.calculator.fn.OverallDailyScoreCalculator;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
+import com.shishir.ticketmetrics.persistence.dao.RatingStatsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,42 +21,67 @@ public class OverallScoreService implements OverallDailyScoreCalculator {
   private static final Logger LOG = LoggerFactory.getLogger(OverallScoreService.class);
   private final OverallDailyScoreCacheStore overallDailyScoreCacheStore;
   private final RatingDao ratingDao;
+  private final RatingStatsDao ratingStatsDao;
   
-  public OverallScoreService(OverallDailyScoreCacheStore overallDailyScoreCacheStore, RatingDao ratingDao) {
+  public OverallScoreService(OverallDailyScoreCacheStore overallDailyScoreCacheStore, RatingDao ratingDao, RatingStatsDao ratingStatsDao) {
     this.overallDailyScoreCacheStore = overallDailyScoreCacheStore;
     this.ratingDao = ratingDao;
+    this.ratingStatsDao = ratingStatsDao;
   }
   
   public BigDecimal getOverallScore(LocalDate startDate, LocalDate endDate) {
     LOG.debug("Calculating overall score: startDate={}, endDate={}", startDate, endDate);
     var scores = getScoresInRange(startDate, endDate);
-    int count = scores.size();
+    var count = scores.size();
     var sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    var average = count > 0 ? sum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
-    LOG.debug("Calculated overall score: sum={}, count={}, average={}", sum, count, average);
-    return average;
+    var avg = count > 0 ? sum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
+    LOG.debug("Calculated overall score: sum={}, count={}, avg={}, startDate={}, endDate={}", sum, count, avg, startDate, endDate);
+    return avg;
   }
   
   private List<BigDecimal> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     return startDate.datesUntil(endDate.plusDays(1))
-        .map(it -> overallDailyScoreCacheStore.getScoreOrCalculate(it, this::calculate))
+        .map(date -> overallDailyScoreCacheStore.getScoreOrCalculate(date, this::calculate))
         .toList();
   }
   
   @Override
   public BigDecimal calculate(LocalDate date) {
-    LOG.debug("Fetching Rating+Weights for date={}", date);
-    var ratings = ratingDao.fetchRatingsByRatingDate(date);
+    LOG.debug("Starting overall score calculation for date={}", date);
+    
+    // Step 1: Fetch aggregated rating stats by category for the given date
+    var categoryStats = ratingStatsDao.fetchCategoryStatsByRatingDate(date);
+    if (categoryStats.isEmpty()) {
+      LOG.info("No rating data found for date={}", date);
+      return BigDecimal.ZERO;
+    }
+    LOG.info("Fetched {} category rating stats for date={}", categoryStats.size(), date);
+    
+    // Step 2: Load category weights
     var weightMap = ratingDao.getCategoryWeightMap();
+    LOG.debug("Loaded {} category weights", weightMap);
     
-    var scores = ratings.stream()
-        .map(r -> ScoreCalculator.calculateScore(Map.of(r.ratingCategoryId(), r.rating()), weightMap))
-        .collect(Collectors.toList());
+    // Step 3: Calculate individual scores per category
+    var scores = categoryStats.stream()
+        .map(stats -> {
+              var categoryId = stats.categoryId();
+              var ratingAverage = stats.ratingAverage();
+              var weight = weightMap.get(categoryId);
+              
+              var score = ScoreCalculator.calculateScore(Map.of(categoryId, ratingAverage), weightMap);
+              
+              LOG.debug("categoryId={}, ratingAverage={}, weight={}, score={}", categoryId, ratingAverage, weight, score);
+              return score;
+            }
+        )
+        .collect(Collectors.toSet());
     
+    // Step 4: Compute average of scores
     int count = scores.size();
     var sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    var average = count > 0 ? sum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
+    var avg = count > 0 ? sum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
     
-    return average;
+    LOG.debug("Calculated overall score for date={}, avg={}, sum={}, count={}", date, avg, sum, count);
+    return avg;
   }
 }
