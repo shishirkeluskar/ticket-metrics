@@ -9,8 +9,8 @@ import java.math.BigDecimal;
 @Component
 public class TicketScoreCacheStore {
   
-  @Cacheable(value = "ticketScores", key = "#ticketId")
-  public BigDecimal getTicketScoreOrCalculate(Integer ticketId, TicketScoreCalculator calculator) {
+  @Cacheable(value = "ticketScoresByTicketId", key = "#ticketId")
+  public BigDecimal getScoreOrCalculate(Integer ticketId, TicketScoreCalculator calculator) {
     return calculator.calculate(ticketId);
   }
 }
