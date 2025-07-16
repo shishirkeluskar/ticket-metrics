@@ -2,9 +2,6 @@ package com.shishir.ticketmetrics.grpc;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.grpc.support.GrpcRequestHandler;
-import com.shishir.ticketmetrics.grpc.support.GrpcValidationUtils;
-import com.shishir.ticketmetrics.model.CategoryScoreSummary;
-import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -12,20 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.grpc.server.service.GrpcService;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-
 @GrpcService
 public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMetricsServiceImplBase {
   private static final Logger LOG = LoggerFactory.getLogger(TicketMetricsGrpcService.class);
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
-  private final ScoreAggregationService timelineService;
   private final GrpcRequestHandler handler;
   
   
-  public TicketMetricsGrpcService(ScoreAggregationService timelineService, GrpcRequestHandler handler) {
-    this.timelineService = timelineService;
+  public TicketMetricsGrpcService(GrpcRequestHandler handler) {
     this.handler = handler;
   }
   
@@ -46,39 +36,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   @Override
   public void getCategoryTimelineScores(CategoryTimelineRequest request, StreamObserver<CategoryTimelineResponse> responseObserver) {
     try {
-      validateCategoryTimelineRequest(request);
-      
-      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
-      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
-      GrpcValidationUtils.validateDateOrder(startDate, endDate);
-      
-      Map<Integer, CategoryScoreSummary> scoreMap = timelineService.getCategoryScoresOverTime(startDate, endDate);
-      
-      CategoryTimelineResponse.Builder responseBuilder = CategoryTimelineResponse.newBuilder();
-      
-      for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
-        int categoryId = entry.getKey();
-        CategoryScoreSummary summary = entry.getValue();
-        
-        CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
-            .setCategoryId(categoryId)
-            .setTotalRatings(summary.getTotalRatings())
-            .setAverageScore(summary.getFinalAverageScore().doubleValue());
-        
-        // Aggregate scores based on rating creation date
-        summary.getDateScores().forEach((dateTime, score) -> {
-          categoryScoreBuilder.addTimeline(
-              CategoryScoreTimelineEntry.newBuilder()
-                  .setTimestamp(fromLocalDateTimetoString(dateTime))
-                  .setScore(score.doubleValue())
-                  .build()
-          );
-        });
-        
-        responseBuilder.addScores(categoryScoreBuilder.build());
-      }
-      
-      responseObserver.onNext(responseBuilder.build());
+      responseObserver.onNext(handler.handle(request));
       responseObserver.onCompleted();
     } catch (StatusRuntimeException e) {
       LOG.error("Error encountered.", e);
@@ -92,8 +50,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   @Override
   public void getTicketCategoryScores(GetTicketCategoryScoresRequest request, StreamObserver<GetTicketCategoryScoresResponse> responseObserver) {
     try {
-      var response = handler.handle(request);
-      responseObserver.onNext(response);
+      responseObserver.onNext(handler.handle(request));
       responseObserver.onCompleted();
     } catch (StatusRuntimeException e) {
       LOG.error("Error encountered.", e);
@@ -131,15 +88,4 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
       responseObserver.onError(Status.INTERNAL.withDescription("Internal error").withCause(e).asRuntimeException());
     }
   }
-  
-  private String fromLocalDateTimetoString(LocalDateTime date) {
-    return date.format(FORMATTER);
-  }
-  
-  private void validateCategoryTimelineRequest(CategoryTimelineRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
-    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
-  }
-  
-  
 }

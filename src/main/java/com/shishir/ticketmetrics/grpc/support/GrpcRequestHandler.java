@@ -1,6 +1,7 @@
 package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
+import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
@@ -8,10 +9,14 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Component
 public class GrpcRequestHandler {
+  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
+  
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
   private final ScoreAggregationService timelineService;
@@ -37,21 +42,58 @@ public class GrpcRequestHandler {
         .build();
   }
   
-  public GetTicketCategoryScoresResponse handle(GetTicketCategoryScoresRequest request) {
-    validateGetTicketCategoryScoresRequest(request);
-    
+  public CategoryTimelineResponse handle(CategoryTimelineRequest request) {
+    // Validate
+    validateCategoryTimelineRequest(request);
     var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
     var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
-    
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
+    // Process
+    Map<Integer, CategoryScoreSummary> scoreMap = timelineService.getCategoryScoresOverTime(startDate, endDate);
+    
+    // Build response
+    var responseBuilder = CategoryTimelineResponse.newBuilder();
+    
+    for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
+      int categoryId = entry.getKey();
+      CategoryScoreSummary summary = entry.getValue();
+      
+      CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
+          .setCategoryId(categoryId)
+          .setTotalRatings(summary.getTotalRatings())
+          .setAverageScore(summary.getFinalAverageScore().doubleValue());
+      
+      // Aggregate scores based on rating creation date
+      summary.getDateScores().forEach((dateTime, score) -> {
+        categoryScoreBuilder.addTimeline(
+            CategoryScoreTimelineEntry.newBuilder()
+                .setTimestamp(fromLocalDateTimetoString(dateTime))
+                .setScore(score.doubleValue())
+                .build()
+        );
+      });
+      
+      responseBuilder.addScores(categoryScoreBuilder.build());
+    }
+    return responseBuilder.build();
+  }
+  
+  public GetTicketCategoryScoresResponse handle(GetTicketCategoryScoresRequest request) {
+    // Validate
+    validateGetTicketCategoryScoresRequest(request);
+    var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+    var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
+    GrpcValidationUtils.validateDateOrder(startDate, endDate);
+    
+    // Process
     Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(
         startDate.toLocalDate(),
         endDate.toLocalDate()
     );
     
+    // Build response
     GetTicketCategoryScoresResponse.Builder responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
-    
     for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
       TicketCategoryScore.Builder ticketScoreRowBuilder = TicketCategoryScore.newBuilder();
       ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
@@ -108,6 +150,15 @@ public class GrpcRequestHandler {
   
   private void validateGetTicketScoreRequest(GetTicketScoreRequest request) {
     GrpcValidationUtils.validatePositive(request.getTicketId(), "ticket_id");
+  }
+  
+  private String fromLocalDateTimetoString(LocalDateTime date) {
+    return date.format(FORMATTER);
+  }
+  
+  private void validateCategoryTimelineRequest(CategoryTimelineRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
   private void validateGetTicketCategoryScoresRequest(GetTicketCategoryScoresRequest request) {
