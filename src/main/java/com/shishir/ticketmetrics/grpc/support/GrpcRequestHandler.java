@@ -1,7 +1,6 @@
 package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
-import com.shishir.ticketmetrics.model.CategoryScore;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.model.TicketXCategoryScores;
 import com.shishir.ticketmetrics.service.OverallScoreService;
@@ -13,8 +12,6 @@ import org.springframework.stereotype.Component;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -93,22 +90,21 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    var ticketXCategoryScores = ticketCategoryScoresService.getTicketCategoryScores(startDate.toLocalDate(), endDate.toLocalDate());
+    var scoreMatrix = ticketCategoryScoresService.getTicketCategoryScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
     var responseBuilder = TicketCategoryMatrixResponse.newBuilder();
     
-    List<TicketCategoryScore> ticketScores = new ArrayList<>();
-    for (TicketXCategoryScores ticketXCategoryScore : ticketXCategoryScores) {
-      var aTicketEntry = TicketCategoryScore.newBuilder().setTicketId(ticketXCategoryScore.ticketId());
-      for (CategoryScore z : ticketXCategoryScore.categoryScores()) {
-        aTicketEntry.putCategoryScores(z.categoryId(), z.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue());
-      }
-      TicketCategoryScore apply = aTicketEntry.build();
-      ticketScores.add(apply);
-    }
+    scoreMatrix.forEach(row -> {
+      var ticketScoreBuilder = TicketCategoryScore.newBuilder();
+      ticketScoreBuilder.setTicketId(row.ticketId());
+      row.categoryScores().forEach(categoryScore -> {
+        double score = categoryScore.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue();
+        ticketScoreBuilder.putCategoryScores(categoryScore.categoryId(), score);
+      });
+      responseBuilder.addTicketScores(ticketScoreBuilder.build());
+    });
     
-    ticketScores.forEach(responseBuilder::addTicketScores);
     return responseBuilder.build();
   }
   
