@@ -14,7 +14,6 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +85,7 @@ public class GrpcRequestHandler {
     return responseBuilder.build();
   }
   
-  public GetTicketCategoryScoresResponse handle(GetTicketCategoryScoresRequest request) {
+  public TicketCategoryMatrixResponse handle(TicketCategoryMatrixRequest request) {
     // Validate
     validateGetTicketCategoryScoresRequest(request);
     var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
@@ -97,7 +96,7 @@ public class GrpcRequestHandler {
     var ticketXCategoryScores = ticketCategoryScoresService.getTicketCategoryScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
-    var responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
+    var responseBuilder = TicketCategoryMatrixResponse.newBuilder();
     
     List<TicketCategoryScore> ticketScores = new ArrayList<>();
     for (TicketXCategoryScores ticketXCategoryScore : ticketXCategoryScores) {
@@ -167,7 +166,7 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
-  private void validateGetTicketCategoryScoresRequest(GetTicketCategoryScoresRequest request) {
+  private void validateGetTicketCategoryScoresRequest(TicketCategoryMatrixRequest request) {
     GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }

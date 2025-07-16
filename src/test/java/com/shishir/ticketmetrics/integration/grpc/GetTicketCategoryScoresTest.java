@@ -1,6 +1,5 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.generated.grpc.GetTicketCategoryScoresResponse;
 import com.shishir.ticketmetrics.generated.grpc.TicketCategoryScore;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
@@ -51,7 +50,7 @@ public class GetTicketCategoryScoresTest {
   
   @Test
   void shouldFail_whenEmptyRequest() {
-    assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(null))
+    assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(null))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("INVALID_ARGUMENT: start_date must not be blank");
   }
@@ -60,7 +59,7 @@ public class GetTicketCategoryScoresTest {
   void shouldFail_whenInvalidStartDate() {
     var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("incorrect-start-date", "2025-07-04T00:00:00");
     
-    assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(request))
+    assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("INVALID_ARGUMENT: start_date must be in ISO date-time format but was incorrect-start-date");
   }
@@ -69,7 +68,7 @@ public class GetTicketCategoryScoresTest {
   void shouldFail_whenInvalidEndDate() {
     var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("2025-07-04T00:00:00", "incorrect-end-date");
     
-    assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(request))
+    assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("INVALID_ARGUMENT: end_date must be in ISO date-time format but was incorrect-end-date");
   }
@@ -78,7 +77,7 @@ public class GetTicketCategoryScoresTest {
   void shouldFail_whenInvalidDateOrder() {
     var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
     
-    assertThatThrownBy(() -> grpcStub.getTicketCategoryScores(request))
+    assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
   }
@@ -91,7 +90,7 @@ public class GetTicketCategoryScoresTest {
       List<Expected> expectedList
   ) {
     var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest(startDate, endDate);
-    var response = grpcStub.getTicketCategoryScores(request);
+    var response = grpcStub.getTicketCategoryMatrix(request);
     
     assertThat(response.getTicketScoresList()).isNotEmpty();
     
