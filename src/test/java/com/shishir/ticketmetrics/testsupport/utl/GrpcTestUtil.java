@@ -53,7 +53,7 @@ public class GrpcTestUtil {
         .build();
   }
   
-  public static TicketCategoryMatrixRequest buildGetTicketCategoryMatrixRequest(String startDate, String endDate) {
+  public static TicketCategoryMatrixRequest buildTicketCategoryMatrixRequest(String startDate, String endDate) {
     return TicketCategoryMatrixRequest.newBuilder()
         .setStartDate(startDate)
         .setEndDate(endDate)

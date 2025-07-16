@@ -1,8 +1,8 @@
 package com.shishir.ticketmetrics.service;
 
+import com.shishir.ticketmetrics.cache.fn.TicketScoreCalculator;
 import com.shishir.ticketmetrics.cache.store.TicketScoreCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
-import com.shishir.ticketmetrics.calculator.fn.TicketScoreCalculator;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.model.Rating;
 import org.slf4j.Logger;
@@ -15,15 +15,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class TicketScoringService implements TicketScoreCalculator {
+public class TicketScoreService implements TicketScoreCalculator {
   
-  private static final Logger LOG = LoggerFactory.getLogger(TicketScoringService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TicketScoreService.class);
   
-  private final TicketScoreCacheStore ticketScoreCacheStore;
+  private final TicketScoreCacheStore cacheStore;
   private final RatingDao ratingDao;
   
-  public TicketScoringService(TicketScoreCacheStore ticketScoreCacheStore, RatingDao ratingDao) {
-    this.ticketScoreCacheStore = ticketScoreCacheStore;
+  public TicketScoreService(TicketScoreCacheStore cacheStore, RatingDao ratingDao) {
+    this.cacheStore = cacheStore;
     this.ratingDao = ratingDao;
   }
   
@@ -34,7 +34,7 @@ public class TicketScoringService implements TicketScoreCalculator {
    * @return percentage score between 0 and 100
    */
   public BigDecimal getTicketScore(Integer ticketId) {
-    return ticketScoreCacheStore.getScoreOrCalculate(ticketId, this::calculate);
+    return cacheStore.getOrCalculate(ticketId, this::calculate);
   }
   
   @Override

@@ -1,0 +1,37 @@
+= NOTES
+:toc:
+:sectnums:
+
+== Overall quality score and Period over Period score change
+
+**Overall Quality Score** is the average of all **category scores** for a given date, weighted using values from the `rating_categories` table.
+
+**Period-over-Period Score Change** shows the **percentage difference** in overall score between two consecutive periods.
+
+Scores are based on:
+
+=== SQL
+----
+SELECT
+	rating_category_id AS categoryId,
+	DATE(created_at) AS ratingDate,
+	COUNT(*) AS ratingCount,
+	SUM(rating) AS ratingSum,
+	AVG(rating) AS averageRating
+FROM ratings
+WHERE DATE(created_at) = #{date}
+GROUP BY rating_category_id
+ORDER BY rating_category_id
+----
+
+=== Data
+[format=csv, options=header]
+|===
+CategoryId,	RatingDate,	Rating Count,	Rating Sum,	Average Rating
+1,	2020-01-26,	28,	72,	2.5714285714285716
+2,	2020-01-26,	28,	77,	2.75
+3,	2020-01-26,	28,	55,	1.9642857142857142
+4,	2020-01-26,	28,	71,	2.5357142857142856
+|===
+
+This provides **average ratings per category per day**, which are weighted and averaged in code. **Caching** is used to improve performance.

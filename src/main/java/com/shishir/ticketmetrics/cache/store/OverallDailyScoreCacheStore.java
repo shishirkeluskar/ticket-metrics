@@ -1,6 +1,6 @@
 package com.shishir.ticketmetrics.cache.store;
 
-import com.shishir.ticketmetrics.calculator.fn.OverallDailyScoreCalculator;
+import com.shishir.ticketmetrics.cache.fn.OverallDailyScoreCalculator;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -10,8 +10,8 @@ import java.time.LocalDate;
 @Component
 public class OverallDailyScoreCacheStore {
   
-  @Cacheable(value = "overallDailyScore", key = "#date")
-  public BigDecimal getScoreOrCalculate(LocalDate date, OverallDailyScoreCalculator calculator) {
+  @Cacheable(value = "overallDailyScoreByDate", key = "#date")
+  public BigDecimal getOrCalculate(LocalDate date, OverallDailyScoreCalculator calculator) {
     return calculator.calculate(date);
   }
 }

@@ -97,8 +97,8 @@ public class GetOverallQualityScoreTest {
   static Stream<Arguments> getOverallQualityScoreTestData() {
     return Stream.of(
         arguments("2025-07-01T00:00:00", "2025-07-01T00:00:00", 70d),
-        arguments("2025-07-02T00:00:00", "2025-07-02T00:00:00", 93d),
-        arguments("2025-07-01T00:00:00", "2025-07-02T00:00:00", 82d)
+        arguments("2025-07-02T00:00:00", "2025-07-02T00:00:00", 90d),
+        arguments("2025-07-01T00:00:00", "2025-07-02T00:00:00", 80d)
     );
   }
 }

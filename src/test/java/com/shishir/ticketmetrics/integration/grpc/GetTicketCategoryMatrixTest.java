@@ -1,7 +1,6 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.generated.grpc.TicketCategoryMatrixResponse;
-import com.shishir.ticketmetrics.generated.grpc.TicketCategoryScoreRow;
+import com.shishir.ticketmetrics.generated.grpc.TicketCategoryScore;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
@@ -10,16 +9,25 @@ import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_ticket_matrix.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_ticket_category_matrix.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class GetTicketCategoryMatrixTest {
   
@@ -49,7 +57,7 @@ public class GetTicketCategoryMatrixTest {
   
   @Test
   void shouldFail_whenInvalidStartDate() {
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest("incorrect-start-date", "2025-07-04T00:00:00");
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest("incorrect-start-date", "2025-07-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -58,7 +66,7 @@ public class GetTicketCategoryMatrixTest {
   
   @Test
   void shouldFail_whenInvalidEndDate() {
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest("2025-07-04T00:00:00", "incorrect-end-date");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -67,26 +75,93 @@ public class GetTicketCategoryMatrixTest {
   
   @Test
   void shouldFail_whenInvalidDateOrder() {
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
   }
   
-  @Test
-  void testGetTicketScores() {
-    var startDate = "2025-07-01T00:00:00";
-    var endDate = "2025-07-02T00:00:00";
-    
-    var request = GrpcTestUtil.buildGetTicketCategoryMatrixRequest(startDate, endDate);
-    
-    TicketCategoryMatrixResponse response = grpcStub.getTicketCategoryMatrix(request);
+  @ParameterizedTest
+  @MethodSource("getTicketCategoryMatrixTestData")
+  void canGetTicketCategoryScores(
+      String startDate,
+      String endDate,
+      List<Expected> expectedList
+  ) {
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest(startDate, endDate);
+    var response = grpcStub.getTicketCategoryMatrix(request);
     
     assertThat(response.getTicketScoresList()).isNotEmpty();
-    for (TicketCategoryScoreRow row : response.getTicketScoresList()) {
-      assertThat(row.getTicketId()).isGreaterThan(0);
-      assertThat(row.getCategoryScoresMap()).isNotEmpty();
+    
+    List<Integer> expectedTicketIds = expectedList.stream().map(it -> it.ticketId).toList();
+    List<Integer> actualTicketIds = response.getTicketScoresList()
+        .stream()
+        .map(TicketCategoryScore::getTicketId)
+        .toList();
+    
+    assertThat(actualTicketIds).containsExactlyInAnyOrderElementsOf(expectedTicketIds);
+    
+    
+    for (var ticketId : expectedTicketIds) {
+      var ticketScore = response.getTicketScoresList()
+          .stream()
+          .filter(t -> t.getTicketId() == ticketId)
+          .findFirst()
+          .orElseThrow(() -> new AssertionError("TicketId " + ticketId + " not found in response"));
+      
+      var actualCategoryScores = ticketScore.getCategoryScoresMap();
+      var expectedCategoryScores = expectedList.stream()
+          .filter(it -> Objects.equals(it.ticketId, ticketId))
+          .findFirst()
+          .orElseThrow(() -> new AssertionError("TicketId " + ticketId + " not found in response"))
+          .categoryScores;
+      
+      assertThat(actualCategoryScores).containsExactlyInAnyOrderEntriesOf(expectedCategoryScores);
+    }
+  }
+  
+  static Stream<Arguments> getTicketCategoryMatrixTestData() {
+    return Stream.of(
+        // Ticket 1,2,3
+        arguments("2025-07-01T00:00:00", "2025-07-03T23:59:59",
+            List.of(
+                Expected.of(1, Map.of(
+                    1, 80d,
+                    2, 60d
+                )),
+                Expected.of(2, Map.of(
+                    1, 100d,
+                    3, 40d
+                )),
+                Expected.of(3, Map.of(
+                    4, 80d
+                ))
+            )
+        ),
+        arguments("2025-07-02T00:00:00", "2025-07-04T23:59:59",
+            List.of(
+                Expected.of(2, Map.of(
+                    1, 100d,
+                    3, 40d
+                )),
+                Expected.of(3, Map.of(
+                    4, 80d
+                )),
+                Expected.of(4, Map.of(
+                    2, 20d
+                ))
+            )
+        )
+    );
+  }
+  
+  private record Expected(
+      Integer ticketId,
+      Map<Integer, Double> categoryScores
+  ) {
+    public static Expected of(Integer ticketId, Map<Integer, Double> categoryScores) {
+      return new Expected(ticketId, categoryScores);
     }
   }
 }

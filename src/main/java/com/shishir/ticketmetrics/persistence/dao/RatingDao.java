@@ -35,11 +35,11 @@ public interface RatingDao {
   List<RatingCategory> fetchRatingCategories();
   
   @Select("""
-          SELECT *
-          FROM ratings
-          WHERE DATE(created_at) = #{ratingDate}
+      SELECT id
+      FROM tickets
+      WHERE DATE(created_at) BETWEEN #{startDate} AND #{endDate}
       """)
-  List<Rating> fetchRatingsByRatingDate(@Param("ratingDate") LocalDate ratingDate);
+  List<Integer> fetchTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
   
   @Select("""
           SELECT r.rating_category_id AS category_id,
@@ -63,11 +63,11 @@ public interface RatingDao {
           FROM ratings r
           JOIN rating_categories rc ON r.rating_category_id = rc.id
           JOIN tickets t ON r.ticket_id = t.id
-          WHERE t.created_at BETWEEN #{start} AND #{end}
+          WHERE DATE(t.created_at) BETWEEN #{start} AND #{end}
       """)
   List<RatingWithCategoryWeight> findRatingsForTicketsCreatedBetween(
-      @Param("start") LocalDateTime start,
-      @Param("end") LocalDateTime end
+      @Param("start") LocalDate start,
+      @Param("end") LocalDate end
   );
   
   @Select("""
@@ -82,13 +82,13 @@ public interface RatingDao {
           JOIN tickets t ON r.ticket_id = t.id
           WHERE r.ticket_id = #{ticketId}
             AND r.rating_category_id = #{categoryId}
-            AND t.created_at BETWEEN #{start} AND #{end}
+            AND DATE(t.created_at) BETWEEN #{start} AND #{end}
       """)
   List<RatingWithCategoryWeight> findRatingsForTicketCategoryBetween(
       @Param("ticketId") int ticketId,
       @Param("categoryId") int categoryId,
-      @Param("start") LocalDateTime start,
-      @Param("end") LocalDateTime end);
+      @Param("start") LocalDate start,
+      @Param("end") LocalDate end);
   
   /**
    * Returns categoryId -> weight map.
