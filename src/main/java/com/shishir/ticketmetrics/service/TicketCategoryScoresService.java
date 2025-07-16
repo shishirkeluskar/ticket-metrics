@@ -1,5 +1,6 @@
 package com.shishir.ticketmetrics.service;
 
+import com.shishir.ticketmetrics.cache.store.TicketCategoryScoresCacheStore;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import org.springframework.cache.annotation.Cacheable;
@@ -16,9 +17,11 @@ import java.util.Map;
 @Service
 public class TicketCategoryScoresService {
   private final RatingDao ratingDao;
+  private final TicketCategoryScoresCacheStore cacheStore;
   
-  public TicketCategoryScoresService(RatingDao ratingDao) {
+  public TicketCategoryScoresService(RatingDao ratingDao, TicketCategoryScoresCacheStore cacheStore) {
     this.ratingDao = ratingDao;
+    this.cacheStore = cacheStore;
   }
   
   /**
