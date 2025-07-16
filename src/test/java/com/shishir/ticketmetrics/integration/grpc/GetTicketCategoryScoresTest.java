@@ -140,8 +140,8 @@ public class GetTicketCategoryScoresTest {
   
   static Stream<Arguments> getTicketCategoryScoresTestData() {
     return Stream.of(
-        // ticket 1, category 1 (Spelling): rating 4, weight 1, score = 4*1/1*5*100 = 80.00 approx
-        arguments("2025-07-01T00:00:00", "2025-07-02T23:59:59",
+        // Ticket 1,2,3
+        arguments("2025-07-01T00:00:00", "2025-07-03T23:59:59",
             List.of(
                 Expected.of(1, Map.of(
                     1, 80d,
@@ -150,24 +150,26 @@ public class GetTicketCategoryScoresTest {
                 Expected.of(2, Map.of(
                     1, 100d,
                     3, 40d
+                )),
+                Expected.of(3, Map.of(
+                    4, 80d
+                ))
+            )
+        ),
+        arguments("2025-07-02T00:00:00", "2025-07-04T23:59:59",
+            List.of(
+                Expected.of(2, Map.of(
+                    1, 100d,
+                    3, 40d
+                )),
+                Expected.of(3, Map.of(
+                    4, 80d
+                )),
+                Expected.of(4, Map.of(
+                    2, 20d
                 ))
             )
         )
-
-//        // ticket 1, category 2 (Grammar): rating 3, weight 0.7, score = 3*0.7/0.7*5*100 = 60.00 approx
-//        arguments("2025-07-01T00:00:00", "2025-07-01T23:59:59", 1, 2, BigDecimal.valueOf(60.00)),
-//
-//        // ticket 2, category 1 (Spelling): rating 5, weight 1, score = 5*1/1*5*100 = 100.00
-//        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 1, BigDecimal.valueOf(100.00)),
-//
-//        // ticket 2, category 3 (GDPR): rating 2, weight 1.2, score = 2*1.2/1.2*5*100 = 40.00
-//        arguments("2025-07-02T00:00:00", "2025-07-02T23:59:59", 2, 3, BigDecimal.valueOf(40.00)),
-//
-//        // ticket 3, category 4 (Randomness): rating 4, weight 1, score = 4*1/1*5*100 = 80.00
-//        arguments("2025-07-03T00:00:00", "2025-07-03T23:59:59", 3, 4, BigDecimal.valueOf(80.00)),
-//
-//        // ticket 4, category 2 (Grammar): rating 1, weight 0.7, score = 1*0.7/0.7*5*100 = 20.00
-//        arguments("2025-07-04T00:00:00", "2025-07-04T23:59:59", 4, 2, BigDecimal.valueOf(20.00))
     );
   }
   
