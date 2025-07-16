@@ -16,7 +16,6 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   private static final Logger LOG = LoggerFactory.getLogger(TicketMetricsGrpcService.class);
   private final GrpcRequestHandler handler;
   
-  
   public TicketMetricsGrpcService(GrpcRequestHandler handler) {
     this.handler = handler;
   }
