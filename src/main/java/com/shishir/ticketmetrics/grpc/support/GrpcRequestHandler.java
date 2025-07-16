@@ -4,6 +4,7 @@ import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
+import com.shishir.ticketmetrics.service.TicketCategoryScoresService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
 import org.springframework.stereotype.Component;
 
@@ -19,12 +20,14 @@ public class GrpcRequestHandler {
   
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
-  private final ScoreAggregationService timelineService;
+  private final ScoreAggregationService scoreAggregationService;
+  private final TicketCategoryScoresService ticketCategoryScoresService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService scoreAggregationService, TicketCategoryScoresService ticketCategoryScoresService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
-    this.timelineService = timelineService;
+    this.scoreAggregationService = scoreAggregationService;
+    this.ticketCategoryScoresService = ticketCategoryScoresService;
   }
   
   // --- Request & Response handers ---
@@ -50,7 +53,7 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    Map<Integer, CategoryScoreSummary> scoreMap = timelineService.getCategoryScoresOverTime(startDate, endDate);
+    Map<Integer, CategoryScoreSummary> scoreMap = scoreAggregationService.getCategoryScoresOverTime(startDate, endDate);
     
     // Build response
     var responseBuilder = CategoryTimelineResponse.newBuilder();
@@ -87,7 +90,7 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(
+    Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = ticketCategoryScoresService.getScoresByTicket(
         startDate.toLocalDate(),
         endDate.toLocalDate()
     );
