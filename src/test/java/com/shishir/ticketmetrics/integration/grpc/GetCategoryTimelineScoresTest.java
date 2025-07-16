@@ -5,6 +5,7 @@ import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,10 +16,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
@@ -79,24 +82,76 @@ public class GetCategoryTimelineScoresTest {
   
   @ParameterizedTest
   @MethodSource("categoryTimelineCasesTestData")
-  void canGetCategoryTimelineScores(String startDate, String endDate, Integer expectedCategoryCount, Integer expectedDatesPerCategory) {
+  void canGetCategoryTimelineScores(
+      String startDate,
+      String endDate,
+      List<Expected> expectedScores,
+      Integer expectedDatesPerCategory) {
     var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest(startDate, endDate);
     
     var response = grpcStub.getCategoryTimelineScores(request);
     
-    assertThat(response.getScoresList()).hasSize(expectedCategoryCount);
+    assertThat(response.getScoresList()).hasSize(expectedScores.size());
     
-    for (var category : response.getScoresList()) {
-      assertThat(category.getTimelineList()).hasSize(expectedDatesPerCategory);
-      assertThat(category.getAverageScore()).isBetween(0.0, 100.0);
-      assertThat(category.getTotalRatings()).isGreaterThanOrEqualTo(0);
-    }
+    var actualScores = response.getScoresList().stream()
+        .map(actualScore -> Expected.of(
+            actualScore.getCategoryId(),
+            actualScore.getTotalRatings(),
+            actualScore.getAverageScore(),
+            actualScore.getTimelineList().stream()
+                .map(actualTimeline -> ExpectedTimeline.of(actualTimeline.getDate(), actualTimeline.getScore()))
+                .toList()
+        ))
+        .toList();
+    
+    assertThat(actualScores)
+        .extracting("categoryId", "totalRatings", "averageScore")
+        .containsExactlyInAnyOrderElementsOf(expectedScores.stream()
+            .map(it -> tuple(it.categoryId, it.totalRatings, it.averageScore))
+            .toList());
   }
   
   static Stream<Arguments> categoryTimelineCasesTestData() {
     return Stream.of(
-        arguments("2025-07-01T00:00:00", "2025-07-03T00:00:00", 2, 1), // daily
-        arguments("2025-06-01T00:00:00", "2025-07-10T00:00:00", 3, 1)  // weekly
+        arguments(
+            "2025-07-01T00:00:00", "2025-07-03T00:00:00",
+            List.of(
+                Expected.of(1, 1, 80d,
+                    List.of(
+                        ExpectedTimeline.of("", 1d),
+                        ExpectedTimeline.of("", 1d)
+                    )
+                ),
+                Expected.of(2, 1, 60d,
+                    List.of(
+                        ExpectedTimeline.of("", 1d),
+                        ExpectedTimeline.of("", 1d)
+                    )
+                )
+            ),
+            1
+        ) // daily
+//        arguments("2025-06-01T00:00:00", "2025-07-10T00:00:00", 3, 1)  // weekly
     );
+  }
+  
+  record Expected(
+      Integer categoryId,
+      Integer totalRatings,
+      Double averageScore,
+      List<ExpectedTimeline> timeline
+  ) {
+    public static Expected of(Integer categoryId, Integer totalRatings, Double averageScore, List<ExpectedTimeline> timeline) {
+      return new Expected(categoryId, totalRatings, averageScore, timeline);
+    }
+  }
+  
+  record ExpectedTimeline(
+      String date,
+      Double score
+  ) {
+    public static ExpectedTimeline of(String date, Double score) {
+      return new ExpectedTimeline(date, score);
+    }
   }
 }
