@@ -3,7 +3,7 @@ package com.shishir.ticketmetrics.grpc.support;
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.service.OverallScoreService;
-import com.shishir.ticketmetrics.service.ScoreAggregationService;
+import com.shishir.ticketmetrics.service.GetCategoryTimelineScoreService;
 import com.shishir.ticketmetrics.service.TicketCategoryMatrixService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
 import org.springframework.stereotype.Component;
@@ -19,13 +19,13 @@ public class GrpcRequestHandler {
   
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
-  private final ScoreAggregationService scoreAggregationService;
+  private final GetCategoryTimelineScoreService getCategoryTimelineScoreService;
   private final TicketCategoryMatrixService ticketCategoryMatrixService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService scoreAggregationService, TicketCategoryMatrixService ticketCategoryMatrixService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, GetCategoryTimelineScoreService getCategoryTimelineScoreService, TicketCategoryMatrixService ticketCategoryMatrixService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
-    this.scoreAggregationService = scoreAggregationService;
+    this.getCategoryTimelineScoreService = getCategoryTimelineScoreService;
     this.ticketCategoryMatrixService = ticketCategoryMatrixService;
   }
   
@@ -52,7 +52,7 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    Map<Integer, CategoryScoreSummary> scoreMap = scoreAggregationService.getCategoryScoresOverTime(startDate, endDate);
+    Map<Integer, CategoryScoreSummary> scoreMap = getCategoryTimelineScoreService.getCategoryScoresOverTime(startDate, endDate);
     
     // Build response
     var responseBuilder = CategoryTimelineResponse.newBuilder();

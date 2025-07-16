@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class ScoreAggregationService {
+public class GetCategoryTimelineScoreService {
   private final RatingDao ratingDao;
   
-  public ScoreAggregationService(RatingDao ratingDao) {
+  public GetCategoryTimelineScoreService(RatingDao ratingDao) {
     this.ratingDao = ratingDao;
   }
   
