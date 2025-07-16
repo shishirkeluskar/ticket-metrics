@@ -1,7 +1,7 @@
 package com.shishir.ticketmetrics.service;
 
-import com.shishir.ticketmetrics.cache.fn.TicketCategoryScoresCalculator;
-import com.shishir.ticketmetrics.cache.store.TicketCategoryScoresCacheStore;
+import com.shishir.ticketmetrics.cache.fn.TicketCategoryMatrixCalculator;
+import com.shishir.ticketmetrics.cache.store.TicketCategoryMatrixCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
 import com.shishir.ticketmetrics.model.CategoryScore;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
@@ -20,12 +20,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class TicketCategoryScoresService implements TicketCategoryScoresCalculator {
-  private static final Logger LOG = LoggerFactory.getLogger(TicketCategoryScoresService.class);
+public class TicketCategoryMatrixService implements TicketCategoryMatrixCalculator {
+  private static final Logger LOG = LoggerFactory.getLogger(TicketCategoryMatrixService.class);
   private final RatingDao ratingDao;
-  private final TicketCategoryScoresCacheStore cacheStore;
+  private final TicketCategoryMatrixCacheStore cacheStore;
   
-  public TicketCategoryScoresService(RatingDao ratingDao, TicketCategoryScoresCacheStore cacheStore) {
+  public TicketCategoryMatrixService(RatingDao ratingDao, TicketCategoryMatrixCacheStore cacheStore) {
     this.ratingDao = ratingDao;
     this.cacheStore = cacheStore;
   }

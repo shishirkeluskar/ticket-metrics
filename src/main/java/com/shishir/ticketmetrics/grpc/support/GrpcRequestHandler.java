@@ -2,10 +2,9 @@ package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
-import com.shishir.ticketmetrics.model.TicketXCategoryScores;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.ScoreAggregationService;
-import com.shishir.ticketmetrics.service.TicketCategoryScoresService;
+import com.shishir.ticketmetrics.service.TicketCategoryMatrixService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
 import org.springframework.stereotype.Component;
 
@@ -21,13 +20,13 @@ public class GrpcRequestHandler {
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
   private final ScoreAggregationService scoreAggregationService;
-  private final TicketCategoryScoresService ticketCategoryScoresService;
+  private final TicketCategoryMatrixService ticketCategoryMatrixService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService scoreAggregationService, TicketCategoryScoresService ticketCategoryScoresService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService scoreAggregationService, TicketCategoryMatrixService ticketCategoryMatrixService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
     this.scoreAggregationService = scoreAggregationService;
-    this.ticketCategoryScoresService = ticketCategoryScoresService;
+    this.ticketCategoryMatrixService = ticketCategoryMatrixService;
   }
   
   // --- Request & Response handers ---
@@ -90,7 +89,7 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    var scoreMatrix = ticketCategoryScoresService.getTicketCategoryScores(startDate.toLocalDate(), endDate.toLocalDate());
+    var scoreMatrix = ticketCategoryMatrixService.getTicketCategoryScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
     var responseBuilder = TicketCategoryMatrixResponse.newBuilder();

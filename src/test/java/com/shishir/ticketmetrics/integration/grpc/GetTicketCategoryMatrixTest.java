@@ -27,9 +27,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_ticket_category_scores.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_get_ticket_category_matrix.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class GetTicketCategoryScoresTest {
+public class GetTicketCategoryMatrixTest {
   
   @LocalGrpcPort
   int port;
@@ -57,7 +57,7 @@ public class GetTicketCategoryScoresTest {
   
   @Test
   void shouldFail_whenInvalidStartDate() {
-    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("incorrect-start-date", "2025-07-04T00:00:00");
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest("incorrect-start-date", "2025-07-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -66,7 +66,7 @@ public class GetTicketCategoryScoresTest {
   
   @Test
   void shouldFail_whenInvalidEndDate() {
-    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("2025-07-04T00:00:00", "incorrect-end-date");
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest("2025-07-04T00:00:00", "incorrect-end-date");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -75,7 +75,7 @@ public class GetTicketCategoryScoresTest {
   
   @Test
   void shouldFail_whenInvalidDateOrder() {
-    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest("2025-07-04T00:00:00", "2025-06-04T00:00:00");
     
     assertThatThrownBy(() -> grpcStub.getTicketCategoryMatrix(request))
         .isInstanceOf(StatusRuntimeException.class)
@@ -83,13 +83,13 @@ public class GetTicketCategoryScoresTest {
   }
   
   @ParameterizedTest
-  @MethodSource("getTicketCategoryScoresTestData")
+  @MethodSource("getTicketCategoryMatrixTestData")
   void canGetTicketCategoryScores(
       String startDate,
       String endDate,
       List<Expected> expectedList
   ) {
-    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest(startDate, endDate);
+    var request = GrpcTestUtil.buildTicketCategoryMatrixRequest(startDate, endDate);
     var response = grpcStub.getTicketCategoryMatrix(request);
     
     assertThat(response.getTicketScoresList()).isNotEmpty();
@@ -121,7 +121,7 @@ public class GetTicketCategoryScoresTest {
     }
   }
   
-  static Stream<Arguments> getTicketCategoryScoresTestData() {
+  static Stream<Arguments> getTicketCategoryMatrixTestData() {
     return Stream.of(
         // Ticket 1,2,3
         arguments("2025-07-01T00:00:00", "2025-07-03T23:59:59",
