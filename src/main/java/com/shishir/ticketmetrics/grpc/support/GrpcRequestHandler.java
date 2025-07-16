@@ -70,7 +70,7 @@ public class GrpcRequestHandler {
       summary.getDateScores().forEach((dateTime, score) -> {
         categoryScoreBuilder.addTimeline(
             CategoryScoreTimelineEntry.newBuilder()
-                .setTimestamp(fromLocalDateTimetoString(dateTime))
+                .setDate(fromLocalDateTimetoString(dateTime))
                 .setScore(score.doubleValue())
                 .build()
         );

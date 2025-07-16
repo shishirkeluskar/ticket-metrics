@@ -37,7 +37,7 @@ message CategoryAggregateScore {
 }
 
 message CategoryScoreTimelineEntry {
-  string timestamp = 1; // ISO 8601 UTC format
+  string date = 1; // ISO 8601 UTC format
   double score = 2;
 }
 
