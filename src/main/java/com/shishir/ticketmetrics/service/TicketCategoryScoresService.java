@@ -1,21 +1,27 @@
 package com.shishir.ticketmetrics.service;
 
+import com.shishir.ticketmetrics.cache.fn.TicketCategoryScoresCalculator;
 import com.shishir.ticketmetrics.cache.store.TicketCategoryScoresCacheStore;
+import com.shishir.ticketmetrics.calculator.ScoreCalculator;
+import com.shishir.ticketmetrics.model.CategoryScore;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
+import com.shishir.ticketmetrics.model.TicketXCategoryScores;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
+import com.shishir.ticketmetrics.persistence.model.Rating;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-public class TicketCategoryScoresService {
+public class TicketCategoryScoresService implements TicketCategoryScoresCalculator {
+  private static final Logger LOG = LoggerFactory.getLogger(TicketCategoryScoresService.class);
   private final RatingDao ratingDao;
   private final TicketCategoryScoresCacheStore cacheStore;
   
@@ -83,5 +89,54 @@ public class TicketCategoryScoresService {
     BigDecimal maxPossible = totalWeight.multiply(BigDecimal.valueOf(5));
     return weightedSum.multiply(BigDecimal.valueOf(100))
         .divide(maxPossible, 6, RoundingMode.HALF_UP);
+  }
+  
+  public List<TicketXCategoryScores> getTicketCategoryScores(LocalDate start, LocalDate end) {
+    var tickets = ratingDao.fetchTickets(start, end);
+    LOG.debug("Found {} tickets between {} and {}", tickets.size(), start, end);
+    var ticketXCategoryScores = tickets.stream()
+        .map(ticketId -> cacheStore.getOrCalculate(ticketId, this::calculate))
+        .filter(Objects::nonNull)
+        .toList();
+    LOG.debug("Calculated {} ratings of tickets between {} and {}", ticketXCategoryScores.size(), start, end);
+    return ticketXCategoryScores;
+  }
+  
+  @Override
+  public TicketXCategoryScores calculate(Integer ticketId) {
+    LOG.debug("Starting ticket x category score calculation for ticketId={}", ticketId);
+    var ratingMap = getRatingMap(ticketId);
+    var weightMap = ratingDao.getCategoryWeightMap();
+    
+    if (ratingMap.isEmpty()) {
+      LOG.debug("No ratings found for ticketId={}", ticketId);
+      return null;
+    } else {
+      var ticketXCategoryScores = TicketXCategoryScores.of(
+          ticketId,
+          weightMap                             // iterate over each category
+              .keySet()
+              .stream()
+              .filter(ratingMap::containsKey)   // check if ticket has rating for that category
+              .map(categoryId -> {      // calculate score
+                var score = ScoreCalculator.calculateScore(
+                    Map.of(categoryId, ratingMap.get(categoryId)),
+                    weightMap
+                ).setScale(6, RoundingMode.HALF_EVEN);
+                return CategoryScore.of(categoryId, score);
+              })
+              .toList()
+      );
+      LOG.debug("Calculated ticket x category ticketId={} score={}", ticketId, ticketXCategoryScores);
+      return ticketXCategoryScores;
+    }
+  }
+  
+  private Map<Integer, BigDecimal> getRatingMap(Integer ticketId) {
+    LOG.debug("Fetching ratings: ticketId={}", ticketId);
+    return ratingDao
+        .fetchRatingsByTicketId(ticketId)
+        .stream()
+        .collect(Collectors.toMap(Rating::ratingCategoryId, Rating::rating));
   }
 }

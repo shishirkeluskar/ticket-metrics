@@ -32,7 +32,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   
   @Override
   public void getTicketCategoryScores(GetTicketCategoryScoresRequest request, StreamObserver<GetTicketCategoryScoresResponse> responseObserver) {
-    handleGrpcCall(request, handler::handle, responseObserver);
+    handleGrpcCall(request, handler::handle2, responseObserver);
   }
   
   @Override

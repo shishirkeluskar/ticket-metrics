@@ -35,6 +35,13 @@ public interface RatingDao {
   List<RatingCategory> fetchRatingCategories();
   
   @Select("""
+      SELECT id
+      FROM tickets
+      WHERE DATE(created_at) BETWEEN #{startDate} AND #{endDate}
+      """)
+  List<Integer> fetchTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+  
+  @Select("""
           SELECT r.rating_category_id AS category_id,
                  r.rating,
                  r.created_at AS timestamp

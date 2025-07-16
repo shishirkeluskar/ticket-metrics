@@ -83,22 +83,6 @@ public class GetTicketCategoryScoresTest {
         .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
   }
   
-  @Test
-  void testGetTicketScores() {
-    var startDate = "2025-07-01T00:00:00";
-    var endDate = "2025-07-02T00:00:00";
-    
-    var request = GrpcTestUtil.buildGetTicketCategoryScoresRequest(startDate, endDate);
-    
-    GetTicketCategoryScoresResponse response = grpcStub.getTicketCategoryScores(request);
-    
-    assertThat(response.getTicketScoresList()).isNotEmpty();
-    for (TicketCategoryScore row : response.getTicketScoresList()) {
-      assertThat(row.getTicketId()).isGreaterThan(0);
-      assertThat(row.getCategoryScoresMap()).isNotEmpty();
-    }
-  }
-  
   @ParameterizedTest
   @MethodSource("getTicketCategoryScoresTestData")
   void canGetTicketCategoryScores(

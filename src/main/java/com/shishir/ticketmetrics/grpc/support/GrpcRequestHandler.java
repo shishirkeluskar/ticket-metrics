@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -108,6 +110,44 @@ public class GrpcRequestHandler {
       responseBuilder.addTicketScores(ticketScoreRowBuilder);
     }
     return responseBuilder.build();
+  }
+  
+  public GetTicketCategoryScoresResponse handle2(GetTicketCategoryScoresRequest request) {
+    // Validate
+    validateGetTicketCategoryScoresRequest(request);
+    var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+    var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
+    GrpcValidationUtils.validateDateOrder(startDate, endDate);
+    
+    // Process
+    var x = ticketCategoryScoresService.getTicketCategoryScores(startDate.toLocalDate(), endDate.toLocalDate());
+    
+    // Build response
+    List<TicketCategoryScore> y = x.stream()
+        .map(t -> {
+          var aTicketEntry = TicketCategoryScore.newBuilder().setTicketId(t.ticketId());
+          t.categoryScores().forEach(z -> aTicketEntry.putCategoryScores(z.categoryId(), z.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue()));
+          return aTicketEntry.build();
+        })
+        .sorted(Comparator.comparing(TicketCategoryScore::getTicketId))
+        .toList();
+    
+    var b = GetTicketCategoryScoresResponse.newBuilder();
+    y.forEach(b::addTicketScores);
+    return b.build();
+    
+//    GetTicketCategoryScoresResponse.Builder responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
+//    for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
+//      TicketCategoryScore.Builder ticketScoreRowBuilder = TicketCategoryScore.newBuilder();
+//      ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
+//
+//      for (Map.Entry<Integer, BigDecimal> categoryEntry : ticketEntry.getValue().entrySet()) {
+//        ticketScoreRowBuilder.putCategoryScores(categoryEntry.getKey(), categoryEntry.getValue().doubleValue());
+//      }
+//
+//      responseBuilder.addTicketScores(ticketScoreRowBuilder);
+//    }
+//    return responseBuilder.build();
   }
   
   public OverallQualityScoreResponse handle(OverallQualityScoreRequest request) {
