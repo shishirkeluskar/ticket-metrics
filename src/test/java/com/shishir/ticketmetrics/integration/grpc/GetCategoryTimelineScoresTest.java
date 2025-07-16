@@ -1,6 +1,5 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.generated.grpc.CategoryAggregateScore;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
@@ -9,16 +8,22 @@ import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.stream.Stream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_category_timeline.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_category_timeline.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class GetCategoryTimelineScoresTest {
   @LocalGrpcPort
@@ -72,16 +77,26 @@ public class GetCategoryTimelineScoresTest {
         .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
   }
   
-  @Test
-  void canGetCategoryTimelineScores() {
-    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest("2025-07-02T00:00:00", "2025-07-04T00:00:00");
+  @ParameterizedTest
+  @MethodSource("categoryTimelineCasesTestData")
+  void canGetCategoryTimelineScores(String startDate, String endDate, Integer expectedCategoryCount, Integer expectedDatesPerCategory) {
+    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest(startDate, endDate);
     
     var response = grpcStub.getCategoryTimelineScores(request);
     
-    assertThat(response.getScoresList()).isNotEmpty();
-    for (CategoryAggregateScore score : response.getScoresList()) {
-      assertThat(score.getCategoryId()).isGreaterThan(0);
-      assertThat(score.getAverageScore()).isBetween(0.0, 100.0);
+    assertThat(response.getScoresList()).hasSize(expectedCategoryCount);
+    
+    for (var category : response.getScoresList()) {
+      assertThat(category.getTimelineList()).hasSize(expectedDatesPerCategory);
+      assertThat(category.getAverageScore()).isBetween(0.0, 100.0);
+      assertThat(category.getTotalRatings()).isGreaterThanOrEqualTo(0);
     }
+  }
+  
+  static Stream<Arguments> categoryTimelineCasesTestData() {
+    return Stream.of(
+        arguments("2025-07-01T00:00:00", "2025-07-03T00:00:00", 2, 1), // daily
+        arguments("2025-06-01T00:00:00", "2025-07-10T00:00:00", 3, 1)  // weekly
+    );
   }
 }

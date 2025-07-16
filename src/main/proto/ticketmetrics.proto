@@ -41,7 +41,6 @@ message CategoryScoreTimelineEntry {
   double score = 2;
 }
 
-
 // -------- 3. Ticket/Category Matrix --------
 
 message TicketCategoryMatrixRequest {
@@ -83,7 +82,6 @@ message PeriodScoreComparisonResponse {
   double previous_period_score = 2;
   double score_change = 3; // current - previous in percentage points
 }
-
 
 // -------- gRPC Service --------
 
