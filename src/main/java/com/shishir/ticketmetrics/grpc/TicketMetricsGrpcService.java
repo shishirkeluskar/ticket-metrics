@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.grpc.server.service.GrpcService;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -93,34 +92,9 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   @Override
   public void getTicketCategoryScores(GetTicketCategoryScoresRequest request, StreamObserver<GetTicketCategoryScoresResponse> responseObserver) {
     try {
-      validateTicketCategoryMatrixRequest(request);
-      
-      var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
-      var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
-      
-      GrpcValidationUtils.validateDateOrder(startDate, endDate);
-      
-      Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(
-          startDate.toLocalDate(),
-          endDate.toLocalDate()
-      );
-      
-      GetTicketCategoryScoresResponse.Builder responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
-      
-      for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
-        TicketCategoryScore.Builder ticketScoreRowBuilder = TicketCategoryScore.newBuilder();
-        ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
-        
-        for (Map.Entry<Integer, BigDecimal> categoryEntry : ticketEntry.getValue().entrySet()) {
-          ticketScoreRowBuilder.putCategoryScores(categoryEntry.getKey(), categoryEntry.getValue().doubleValue());
-        }
-        
-        responseBuilder.addTicketScores(ticketScoreRowBuilder);
-      }
-      
-      responseObserver.onNext(responseBuilder.build());
+      var response = handler.handle(request);
+      responseObserver.onNext(response);
       responseObserver.onCompleted();
-      
     } catch (StatusRuntimeException e) {
       LOG.error("Error encountered.", e);
       responseObserver.onError(e);
@@ -167,8 +141,5 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
     GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
-  private void validateTicketCategoryMatrixRequest(GetTicketCategoryScoresRequest request) {
-    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
-    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
-  }
+  
 }

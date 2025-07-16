@@ -2,20 +2,27 @@ package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.service.OverallScoreService;
+import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 
 @Component
 public class GrpcRequestHandler {
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
+  private final ScoreAggregationService timelineService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService timelineService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
+    this.timelineService = timelineService;
   }
+  
+  // --- Request & Response handers ---
   
   public GetTicketScoreResponse handle(GetTicketScoreRequest request) {
     // Validate
@@ -28,6 +35,34 @@ public class GrpcRequestHandler {
     return GetTicketScoreResponse.newBuilder()
         .setScore(score.setScale(0, RoundingMode.HALF_EVEN).doubleValue())
         .build();
+  }
+  
+  public GetTicketCategoryScoresResponse handle(GetTicketCategoryScoresRequest request) {
+    validateGetTicketCategoryScoresRequest(request);
+    
+    var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+    var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
+    
+    GrpcValidationUtils.validateDateOrder(startDate, endDate);
+    
+    Map<Integer, Map<Integer, BigDecimal>> scoresByTicket = timelineService.getScoresByTicket(
+        startDate.toLocalDate(),
+        endDate.toLocalDate()
+    );
+    
+    GetTicketCategoryScoresResponse.Builder responseBuilder = GetTicketCategoryScoresResponse.newBuilder();
+    
+    for (Map.Entry<Integer, Map<Integer, BigDecimal>> ticketEntry : scoresByTicket.entrySet()) {
+      TicketCategoryScore.Builder ticketScoreRowBuilder = TicketCategoryScore.newBuilder();
+      ticketScoreRowBuilder.setTicketId(ticketEntry.getKey());
+      
+      for (Map.Entry<Integer, BigDecimal> categoryEntry : ticketEntry.getValue().entrySet()) {
+        ticketScoreRowBuilder.putCategoryScores(categoryEntry.getKey(), categoryEntry.getValue().doubleValue());
+      }
+      
+      responseBuilder.addTicketScores(ticketScoreRowBuilder);
+    }
+    return responseBuilder.build();
   }
   
   public OverallQualityScoreResponse handle(OverallQualityScoreRequest request) {
@@ -69,8 +104,15 @@ public class GrpcRequestHandler {
         .build();
   }
   
+  // --- Helpers ---
+  
   private void validateGetTicketScoreRequest(GetTicketScoreRequest request) {
     GrpcValidationUtils.validatePositive(request.getTicketId(), "ticket_id");
+  }
+  
+  private void validateGetTicketCategoryScoresRequest(GetTicketCategoryScoresRequest request) {
+    GrpcValidationUtils.validateNotBlank(request.getStartDate(), "start_date");
+    GrpcValidationUtils.validateNotBlank(request.getEndDate(), "end_date");
   }
   
   private void validateOverallQualityScoreRequest(OverallQualityScoreRequest request) {
