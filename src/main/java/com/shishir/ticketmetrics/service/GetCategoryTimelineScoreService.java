@@ -13,11 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.time.temporal.TemporalAdjusters;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,15 +34,66 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
   }
   
   public List<CategoryScoreSummary> getCategoryTimelineScores(LocalDate startDate, LocalDate endDate) {
-    var x = getScoresInRange(startDate, endDate);
+    var categoryScoresByDate = getScoresInRange(startDate, endDate);
+    LOG.debug("categoryScoresByDate={}", categoryScoresByDate);
     
-    LOG.debug("abc={}", x);
-    return x;
+    if (isMoreThanMonth(startDate, endDate)) {
+      return groupByWeek(categoryScoresByDate);
+    } else {
+      return categoryScoresByDate;
+    }
+  }
+  
+  private boolean isMoreThanMonth(LocalDate startDate, LocalDate endDate) {
+    boolean moreThanMonth = startDate.plusMonths(1).isBefore(endDate);
+    
+    LOG.debug("Difference in startDate={} and endDate={} is moreThanMonth={}", startDate, endDate, moreThanMonth);
+    return moreThanMonth;
+  }
+  
+  public List<CategoryScoreSummary> groupByWeek(List<CategoryScoreSummary> categoryScoreSummaries) {
+    LOG.debug("Begin merging category score summary");
+    var categoryScoreSummaryWithWeeklyTimeline = new ArrayList<CategoryScoreSummary>();
+    
+    for (CategoryScoreSummary css : categoryScoreSummaries) {
+      // Step 1: Group timeline per week
+      var mapTimelinePerWeek = css.timeline().stream()
+          .collect(Collectors.groupingBy(
+              it -> it.date().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+              Collectors.toList()
+          ));
+      
+      // Step 2: Calculate score average of the week
+      // and create new timeline in new Category summary.
+      var scoreSum = BigDecimal.ZERO;
+      var count = 0L;
+      var timelinePerWeek = new ArrayList<CategoryScoreSummary.Timeline>();
+      for (var weekEntry : mapTimelinePerWeek.entrySet()) {
+        var weekStartDate = weekEntry.getKey();
+        var listOfDaysToMerge = weekEntry.getValue();
+        for (var value : listOfDaysToMerge) {
+          count += 1;
+          scoreSum = scoreSum.add(value.score());
+        }
+        var scoreAverage = scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN);
+        timelinePerWeek.add(CategoryScoreSummary.Timeline.of(weekStartDate, scoreAverage));
+      }
+      
+      categoryScoreSummaryWithWeeklyTimeline.add(CategoryScoreSummary.of(
+          css.categoryId(),
+          css.ratingsCount(),
+          css.averageScore(),
+          timelinePerWeek
+      ));
+    }
+    LOG.debug("Finished merging category score per week");
+    return categoryScoreSummaryWithWeeklyTimeline;
   }
   
   private List<CategoryScoreSummary> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     var categoryScoreStatsMap = startDate.datesUntil(endDate.plusDays(1))
         .map(date -> cacheStore.getOrCalculate(date, this::calculate))
+        .filter(Objects::nonNull)
         .flatMap(Collection::stream)
         .collect(Collectors.groupingBy(CategoryScoreStatsByRatingDate::categoryId, Collectors.toList()));
     
@@ -64,14 +114,14 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
           }
           var scoreAverage = count > 0 ? scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
           
-          var out = CategoryScoreSummary.of(
+          var categoryScoreSummary = CategoryScoreSummary.of(
               categoryId,
               ratingsCount,
               scoreAverage,
               timeline
           );
-          
-          return out;
+          LOG.debug("Created categoryScoreSummary={}", categoryScoreSummary);
+          return categoryScoreSummary;
         })
         .toList();
     
