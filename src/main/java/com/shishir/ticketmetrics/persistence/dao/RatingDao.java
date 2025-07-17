@@ -34,7 +34,7 @@ public interface RatingDao {
   List<RatingCategory> fetchRatingCategories();
   
   @Select("""
-      SELECT t.id
+      SELECT DISTINCT t.id
       FROM tickets t
           JOIN ratings r ON t.id = r.ticket_id
       WHERE DATE(t.created_at) BETWEEN #{startDate} AND #{endDate}
