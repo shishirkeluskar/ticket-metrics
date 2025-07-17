@@ -1,7 +1,6 @@
 package com.shishir.ticketmetrics.persistence.dao;
 
 import com.shishir.ticketmetrics.model.RatingWithCategory;
-import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import com.shishir.ticketmetrics.persistence.model.Rating;
 import com.shishir.ticketmetrics.persistence.model.RatingCategory;
 import org.apache.ibatis.annotations.Mapper;
@@ -35,11 +34,12 @@ public interface RatingDao {
   List<RatingCategory> fetchRatingCategories();
   
   @Select("""
-      SELECT id
-      FROM tickets
-      WHERE DATE(created_at) BETWEEN #{startDate} AND #{endDate}
+      SELECT t.id
+      FROM tickets t
+          JOIN ratings r ON t.id = r.ticket_id
+      WHERE DATE(t.created_at) BETWEEN #{startDate} AND #{endDate}
       """)
-  List<Integer> fetchTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+  List<Integer> fetchRatedTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
   
   @Select("""
           SELECT r.rating_category_id AS category_id,
@@ -52,43 +52,6 @@ public interface RatingDao {
       @Param("start") LocalDateTime startDate,
       @Param("end") LocalDateTime endDate
   );
-  
-  @Select("""
-          SELECT
-              r.ticket_id,
-              r.rating_category_id AS category_id,
-              r.rating,
-              rc.weight,
-              t.created_at AS ticket_created_at
-          FROM ratings r
-          JOIN rating_categories rc ON r.rating_category_id = rc.id
-          JOIN tickets t ON r.ticket_id = t.id
-          WHERE DATE(t.created_at) BETWEEN #{start} AND #{end}
-      """)
-  List<RatingWithCategoryWeight> findRatingsForTicketsCreatedBetween(
-      @Param("start") LocalDate start,
-      @Param("end") LocalDate end
-  );
-  
-  @Select("""
-          SELECT
-              r.ticket_id,
-              r.rating_category_id AS category_id,
-              r.rating,
-              rc.weight,
-              t.created_at AS ticket_created_at
-          FROM ratings r
-          JOIN rating_categories rc ON r.rating_category_id = rc.id
-          JOIN tickets t ON r.ticket_id = t.id
-          WHERE r.ticket_id = #{ticketId}
-            AND r.rating_category_id = #{categoryId}
-            AND DATE(t.created_at) BETWEEN #{start} AND #{end}
-      """)
-  List<RatingWithCategoryWeight> findRatingsForTicketCategoryBetween(
-      @Param("ticketId") int ticketId,
-      @Param("categoryId") int categoryId,
-      @Param("start") LocalDate start,
-      @Param("end") LocalDate end);
   
   /**
    * Returns categoryId -> weight map.
