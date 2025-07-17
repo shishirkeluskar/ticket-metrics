@@ -149,29 +149,28 @@ public class GetCategoryTimelineScoresTest {
             List.of(
                 Expected.of(1, 7, 92d,
                     List.of(
-                        ExpectedTimeline.of("2025-07-01", 80.0),
-                        ExpectedTimeline.of("2025-07-03", 100.0),
-                        ExpectedTimeline.of("2025-07-23", 100.0),
-                        ExpectedTimeline.of("2025-08-01", 90.0),
-                        ExpectedTimeline.of("2025-08-12", 100.0),
-                        ExpectedTimeline.of("2025-09-09", 80.0),
-                        ExpectedTimeline.of("2025-07-02", 60.0),
-                        ExpectedTimeline.of("2025-08-05", 40.0)
+                        ExpectedTimeline.of("2025-06-30", 90.0),
+                        ExpectedTimeline.of("2025-07-28", 90.0),
+                        ExpectedTimeline.of("2025-08-11", 92.0),
+                        ExpectedTimeline.of("2025-09-08", 90.0),
+                        ExpectedTimeline.of("2025-07-21", 92.0),
+                        ExpectedTimeline.of("2025-07-14", 80.0),
+                        ExpectedTimeline.of("2025-08-04", 66.0),
+                        ExpectedTimeline.of("2025-07-07", 40.0),
+                        ExpectedTimeline.of("2025-08-04", 40.0)
                     )
                 ),
                 Expected.of(2, 7, 66d,
                     List.of(
-                        ExpectedTimeline.of("2025-07-16", 80.0),
-                        ExpectedTimeline.of("2025-07-23", 60.0),
-                        ExpectedTimeline.of("2025-08-01", 60.0),
-                        ExpectedTimeline.of("2025-08-05", 80.0),
-                        ExpectedTimeline.of("2025-08-12", 60.0),
-                        ExpectedTimeline.of("2025-09-09", 60.0),
-                        ExpectedTimeline.of("2025-07-09", 40.0)
+                        ExpectedTimeline.of("2025-06-30", 70.0),
+                        ExpectedTimeline.of("2025-07-28", 67.0),
+                        ExpectedTimeline.of("2025-08-11", 65.0),
+                        ExpectedTimeline.of("2025-09-08", 64.0)
                     )
                 ),
                 Expected.of(3, 2, 40d,
                     List.of(
+                        ExpectedTimeline.of("2025-07-21", 63.0)
                     )
                 )
             )
