@@ -11,8 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,28 +36,44 @@ public class GetCategoryTimelineScoreService2 implements CategoryScoreByRatingDa
   
   public List<CategoryScoreSummary2> getCategoryTimelineScores(LocalDate startDate, LocalDate endDate) {
     var x = getScoresInRange(startDate, endDate);
-    
     return List.of();
   }
   
-  private List<CategoryScoreStatsByRatingDate> getScoresInRange(LocalDate startDate, LocalDate endDate) {
-    var dates = startDate.datesUntil(endDate.plusDays(1)).toList();
+  private List<CategoryScoreSummary2> getScoresInRange(LocalDate startDate, LocalDate endDate) {
+    var categoryScoreStatsMap = startDate.datesUntil(endDate.plusDays(1))
+        .map(date -> cacheStore.getOrCalculate(date, this::calculate))
+        .flatMap(Collection::stream)
+        .collect(Collectors.groupingBy(CategoryScoreStatsByRatingDate::categoryId, Collectors.toList()));
     
-    var summaryList = new ArrayList<>();
-    for (var date : dates) {
-      var x = cacheStore.getOrCalculate(date, this::calculate);
-      summaryList.add(x);
-      
-      // Step 4: Compute average of scores
-//      int count = scores.size();
-//      var sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-//      var avg = count > 0 ? sum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
-    }
+    var categoryScoreSummaries = categoryScoreStatsMap.entrySet().stream()
+        .map(e -> {
+          var categoryId = e.getKey();
+          var ratingsCount = 0L;
+          var scoreSum = BigDecimal.ZERO;
+          var count = 0L;
+          var timeline = new ArrayList<CategoryScoreSummary2.Timeline>();
+          
+          // Step 4: Compute average of scores per category
+          for (var categoryScoreStats : e.getValue()) {
+            count += 1;
+            ratingsCount += categoryScoreStats.ratingCount();
+            scoreSum = scoreSum.add(categoryScoreStats.scoreAverage());
+            timeline.add(CategoryScoreSummary2.Timeline.of(categoryScoreStats.ratingDate(), categoryScoreStats.scoreAverage()));
+          }
+          var scoreAverage = count > 0 ? scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
+          
+          var out = CategoryScoreSummary2.of(
+              categoryId,
+              ratingsCount,
+              scoreAverage,
+              timeline
+          );
+          
+          return out;
+        })
+        .toList();
     
-//    var summary = summaryList.stream()
-//        .collect(Collectors.mapping(CategoryScoreStatsByRatingDate::categoryId, Collectors.toList()));
-//
-    return List.of();
+    return categoryScoreSummaries;
   }
   
   @Override
@@ -95,7 +114,6 @@ public class GetCategoryTimelineScoreService2 implements CategoryScoreByRatingDa
             }
         )
         .toList();
-    
     LOG.debug("date={}, categoryScore={}", date, categoryScores);
     return categoryScores;
   }
