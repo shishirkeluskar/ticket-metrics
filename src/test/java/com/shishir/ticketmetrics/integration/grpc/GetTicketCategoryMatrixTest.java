@@ -124,7 +124,7 @@ public class GetTicketCategoryMatrixTest {
   static Stream<Arguments> getTicketCategoryMatrixTestData() {
     return Stream.of(
         // Ticket 1,2,3
-        arguments("2025-07-01T00:00:00", "2025-07-03T23:59:59",
+        arguments("2025-07-01T00:00:00", "2025-07-03T00:00:00",
             List.of(
                 Expected.of(1, Map.of(
                     1, 80d,
@@ -139,7 +139,7 @@ public class GetTicketCategoryMatrixTest {
                 ))
             )
         ),
-        arguments("2025-07-02T00:00:00", "2025-07-04T23:59:59",
+        arguments("2025-07-02T00:00:00", "2025-07-04T00:00:00",
             List.of(
                 Expected.of(2, Map.of(
                     1, 100d,

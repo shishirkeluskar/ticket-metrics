@@ -1,9 +1,8 @@
 package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
-import com.shishir.ticketmetrics.model.CategoryScoreSummary;
+import com.shishir.ticketmetrics.service.GetCategoryTimelineScoreService;
 import com.shishir.ticketmetrics.service.OverallScoreService;
-import com.shishir.ticketmetrics.service.ScoreAggregationService;
 import com.shishir.ticketmetrics.service.TicketCategoryMatrixService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
 import org.springframework.stereotype.Component;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 @Component
 public class GrpcRequestHandler {
@@ -19,13 +17,13 @@ public class GrpcRequestHandler {
   
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
-  private final ScoreAggregationService scoreAggregationService;
+  private final GetCategoryTimelineScoreService getCategoryTimelineScoreService;
   private final TicketCategoryMatrixService ticketCategoryMatrixService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, ScoreAggregationService scoreAggregationService, TicketCategoryMatrixService ticketCategoryMatrixService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, GetCategoryTimelineScoreService getCategoryTimelineScoreService, TicketCategoryMatrixService ticketCategoryMatrixService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
-    this.scoreAggregationService = scoreAggregationService;
+    this.getCategoryTimelineScoreService = getCategoryTimelineScoreService;
     this.ticketCategoryMatrixService = ticketCategoryMatrixService;
   }
   
@@ -52,32 +50,25 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    Map<Integer, CategoryScoreSummary> scoreMap = scoreAggregationService.getCategoryScoresOverTime(startDate, endDate);
+    var scoresSummary = getCategoryTimelineScoreService.getCategoryTimelineScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
     var responseBuilder = CategoryTimelineResponse.newBuilder();
-    
-    for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
-      int categoryId = entry.getKey();
-      CategoryScoreSummary summary = entry.getValue();
+    scoresSummary.forEach(aScoreSummary -> {
+      var categoryAggregateScore = CategoryAggregateScore.newBuilder();
+      categoryAggregateScore.setCategoryId(aScoreSummary.categoryId());
+      categoryAggregateScore.setTotalRatings(aScoreSummary.ratingsCount().intValue());
+      categoryAggregateScore.setAverageScore(aScoreSummary.averageScore().setScale(0, RoundingMode.HALF_EVEN).doubleValue());
+      aScoreSummary.timeline().forEach(timeline ->
+          categoryAggregateScore.addTimeline(CategoryScoreTimelineEntry.newBuilder()
+              .setDate(timeline.date().toString())
+              .setScore(timeline.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+              .build()
+          )
+      );
       
-      CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
-          .setCategoryId(categoryId)
-          .setTotalRatings(summary.getTotalRatings())
-          .setAverageScore(summary.getFinalAverageScore().doubleValue());
-      
-      // Aggregate scores based on rating creation date
-      summary.getDateScores().forEach((dateTime, score) -> {
-        categoryScoreBuilder.addTimeline(
-            CategoryScoreTimelineEntry.newBuilder()
-                .setTimestamp(fromLocalDateTimetoString(dateTime))
-                .setScore(score.doubleValue())
-                .build()
-        );
-      });
-      
-      responseBuilder.addScores(categoryScoreBuilder.build());
-    }
+      responseBuilder.addScores(categoryAggregateScore.build());
+    });
     return responseBuilder.build();
   }
   
@@ -97,7 +88,7 @@ public class GrpcRequestHandler {
     scoreMatrix.forEach(row -> {
       var ticketScoreBuilder = TicketCategoryScore.newBuilder();
       ticketScoreBuilder.setTicketId(row.ticketId());
-      row.categoryScores().forEach(categoryScore -> {
+      row.categoryScoreByTickets().forEach(categoryScore -> {
         double score = categoryScore.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue();
         ticketScoreBuilder.putCategoryScores(categoryScore.categoryId(), score);
       });

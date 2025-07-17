@@ -4,9 +4,9 @@ import java.util.List;
 
 public record TicketXCategoryScores(
     Integer ticketId,
-    List<CategoryScore> categoryScores
+    List<CategoryScoreByTicket> categoryScoreByTickets
 ) {
-  public static TicketXCategoryScores of(Integer ticketId, List<CategoryScore> categoryScores) {
-    return new TicketXCategoryScores(ticketId, categoryScores);
+  public static TicketXCategoryScores of(Integer ticketId, List<CategoryScoreByTicket> categoryScoreByTickets) {
+    return new TicketXCategoryScores(ticketId, categoryScoreByTickets);
   }
 }

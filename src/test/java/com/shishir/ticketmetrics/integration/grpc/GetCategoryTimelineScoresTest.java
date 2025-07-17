@@ -1,6 +1,5 @@
 package com.shishir.ticketmetrics.integration.grpc;
 
-import com.shishir.ticketmetrics.generated.grpc.CategoryAggregateScore;
 import com.shishir.ticketmetrics.generated.grpc.TicketMetricsServiceGrpc;
 import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
@@ -9,16 +8,24 @@ import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
 @IntegrationTest
-@Sql(scripts = {"/sql/schema.sql", "/sql/data_category_timeline.sql"},
+@Sql(scripts = {"/sql/schema.sql", "/sql/test_data_category_timeline.sql"},
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class GetCategoryTimelineScoresTest {
   @LocalGrpcPort
@@ -72,16 +79,93 @@ public class GetCategoryTimelineScoresTest {
         .hasMessageContaining("INVALID_ARGUMENT: End date must not be before startDate date");
   }
   
-  @Test
-  void canGetCategoryTimelineScores() {
-    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest("2025-07-02T00:00:00", "2025-07-04T00:00:00");
+  @ParameterizedTest
+  @MethodSource("categoryTimelineCasesTestData")
+  void canGetCategoryTimelineScores(
+      String startDate,
+      String endDate,
+      List<Expected> expectedScores,
+      Integer expectedDatesPerCategory) {
+    var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest(startDate, endDate);
     
     var response = grpcStub.getCategoryTimelineScores(request);
     
-    assertThat(response.getScoresList()).isNotEmpty();
-    for (CategoryAggregateScore score : response.getScoresList()) {
-      assertThat(score.getCategoryId()).isGreaterThan(0);
-      assertThat(score.getAverageScore()).isBetween(0.0, 100.0);
+    assertThat(response.getScoresList()).hasSize(expectedScores.size());
+    
+    // Transform response for comparison with expected output
+    var actualScores = response.getScoresList().stream()
+        .map(actualScore -> Expected.of(
+            actualScore.getCategoryId(),
+            actualScore.getTotalRatings(),
+            actualScore.getAverageScore(),
+            actualScore.getTimelineList().stream()
+                .map(actualTimeline -> ExpectedTimeline.of(actualTimeline.getDate(), actualTimeline.getScore()))
+                .toList()
+        ))
+        .toList();
+    
+    assertThat(actualScores)
+        .extracting("categoryId", "totalRatings", "averageScore")
+        .containsExactlyInAnyOrderElementsOf(expectedScores.stream()
+            .map(it -> tuple(it.categoryId, it.totalRatings, it.averageScore))
+            .toList());
+    
+    var x = actualScores.stream()
+        .flatMap((Expected e) -> e.timeline.stream())
+        .toList();
+    
+    System.out.println(x);
+    
+    assertThat(x)
+        .extracting("date", "score")
+        .containsExactlyInAnyOrder(
+            tuple("2025-07-01", 80d),
+            tuple("2025-07-02", 60d),
+            tuple("2025-07-03", 100d)
+        );
+  }
+  
+  static Stream<Arguments> categoryTimelineCasesTestData() {
+    return Stream.of(
+        arguments(
+            "2025-07-01T00:00:00", "2025-07-03T23:59:59",
+            List.of(
+                Expected.of(1, 2, 90d,
+                    List.of(
+                        ExpectedTimeline.of("", 1d),
+                        ExpectedTimeline.of("", 1d)
+                    )
+                ),
+                Expected.of(2, 1, 60d,
+                    List.of(
+                        ExpectedTimeline.of("", 1d),
+                        ExpectedTimeline.of("", 1d)
+                    )
+                )
+            ),
+            1
+        ) // daily
+//        arguments("2025-06-01T00:00:00", "2025-07-10T00:00:00", 3, 1)  // weekly
+    );
+  }
+  
+  record Expected(
+      Integer categoryId,
+      Integer totalRatings,
+      Double averageScore,
+      List<ExpectedTimeline> timeline
+  ) {
+    public static Expected of(Integer categoryId, Integer totalRatings, Double averageScore, List<ExpectedTimeline> timeline) {
+      return new Expected(categoryId, totalRatings, averageScore, timeline);
+    }
+  }
+  
+  record ExpectedTimeline(
+      String date,
+      Double score
+  ) {
+    public static ExpectedTimeline of(String date, Double score) {
+      return new ExpectedTimeline(date, score);
     }
   }
 }
