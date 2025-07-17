@@ -1,10 +1,10 @@
 package com.shishir.ticketmetrics.cache.fn;
 
-import com.shishir.ticketmetrics.model.CategoryScoreByRatingDate;
+import com.shishir.ticketmetrics.model.CategoryRatingStatsByRatingDateDto;
 
 import java.time.LocalDate;
 
 @FunctionalInterface
 public interface CategoryScoreByRatingDateCalculator {
-  CategoryScoreByRatingDate calculate(LocalDate date);
+  CategoryRatingStatsByRatingDateDto calculate(LocalDate date);
 }

@@ -88,32 +88,10 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    Map<Integer, CategoryScoreSummary> scoreMap = getCategoryTimelineScoreService.getCategoryScoresOverTime(startDate, endDate);
+    var scores = getCategoryTimelineScoreService2.getCategoryTimelineScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
     var responseBuilder = CategoryTimelineResponse.newBuilder();
-    
-    for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
-      int categoryId = entry.getKey();
-      CategoryScoreSummary summary = entry.getValue();
-      
-      CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
-          .setCategoryId(categoryId)
-          .setTotalRatings(summary.getTotalRatings())
-          .setAverageScore(summary.getFinalAverageScore().doubleValue());
-      
-      // Aggregate scores based on rating creation date
-      summary.getDateScores().forEach((dateTime, score) -> {
-        categoryScoreBuilder.addTimeline(
-            CategoryScoreTimelineEntry.newBuilder()
-                .setDate(fromLocalDateTimetoString(dateTime))
-                .setScore(score.doubleValue())
-                .build()
-        );
-      });
-      
-      responseBuilder.addScores(categoryScoreBuilder.build());
-    }
     return responseBuilder.build();
   }
   
