@@ -36,7 +36,9 @@ public class GetCategoryTimelineScoreService2 implements CategoryScoreByRatingDa
   
   public List<CategoryScoreSummary2> getCategoryTimelineScores(LocalDate startDate, LocalDate endDate) {
     var x = getScoresInRange(startDate, endDate);
-    return List.of();
+    
+    LOG.debug("abc={}", x);
+    return x;
   }
   
   private List<CategoryScoreSummary2> getScoresInRange(LocalDate startDate, LocalDate endDate) {

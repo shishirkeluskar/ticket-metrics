@@ -119,9 +119,9 @@ public class GetCategoryTimelineScoresTest {
     assertThat(x)
         .extracting("date", "score")
         .containsExactlyInAnyOrder(
-            tuple("2025-07-01T00:00:00", 80d),
-            tuple("2025-07-02T00:00:00", 60d),
-            tuple("2025-07-03T00:00:00", 100d)
+            tuple("2025-07-01", 80d),
+            tuple("2025-07-02", 60d),
+            tuple("2025-07-03", 100d)
         );
   }
   

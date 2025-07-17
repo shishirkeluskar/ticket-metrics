@@ -88,10 +88,25 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    var scores = getCategoryTimelineScoreService2.getCategoryTimelineScores(startDate.toLocalDate(), endDate.toLocalDate());
+    var scoresSummary = getCategoryTimelineScoreService2.getCategoryTimelineScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
     var responseBuilder = CategoryTimelineResponse.newBuilder();
+    scoresSummary.forEach(aScoreSummary -> {
+      var categoryAggregateScore = CategoryAggregateScore.newBuilder();
+      categoryAggregateScore.setCategoryId(aScoreSummary.categoryId());
+      categoryAggregateScore.setTotalRatings(aScoreSummary.ratingsCount().intValue());
+      categoryAggregateScore.setAverageScore(aScoreSummary.averageScore().setScale(0, RoundingMode.HALF_EVEN).doubleValue());
+      aScoreSummary.timeline().forEach(timeline ->
+          categoryAggregateScore.addTimeline(CategoryScoreTimelineEntry.newBuilder()
+              .setDate(timeline.date().toString())
+              .setScore(timeline.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue())
+              .build()
+          )
+      );
+      
+      responseBuilder.addScores(categoryAggregateScore.build());
+    });
     return responseBuilder.build();
   }
   
