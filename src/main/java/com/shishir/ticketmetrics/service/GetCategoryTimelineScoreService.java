@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,7 +54,42 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
   }
   
   public List<CategoryScoreSummary> groupByWeek(List<CategoryScoreSummary> categoryScoreSummaries) {
+    var merged = new ArrayList<CategoryScoreSummary>();
     
+    for (CategoryScoreSummary currC : categoryScoreSummaries) {
+      // Step 1: Group timeline per week
+      var mapTimelinePerWeek = currC.timeline().stream()
+          .collect(Collectors.groupingBy(
+              it -> it.date().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+              Collectors.toList()
+          ));
+      
+      // Step 2: Calculate score average of the week
+      // and create new timeline in new Category summary.
+      var scoreSum = BigDecimal.ZERO;
+      var count = 0L;
+      var timelinePerWeek = new ArrayList<CategoryScoreSummary.Timeline>();
+      
+      for (var weekEntry : mapTimelinePerWeek.entrySet()) {
+        var weekStartDate = weekEntry.getKey();
+        var listOfDaysToMerge = weekEntry.getValue();
+        
+        for (var value : listOfDaysToMerge) {
+          count += 1;
+          scoreSum = scoreSum.add(value.score());
+        }
+        var scoreAverage = scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN);
+        
+        timelinePerWeek.add(CategoryScoreSummary.Timeline.of(weekStartDate, scoreAverage));
+      }
+      
+      merged.add(CategoryScoreSummary.of(
+          currC.categoryId(),
+          currC.ratingsCount(),
+          currC.averageScore(),
+          timelinePerWeek
+      ));
+    }
     
     return categoryScoreSummaries;
   }

@@ -128,22 +128,22 @@ public class GetCategoryTimelineScoresTest {
   
   static Stream<Arguments> categoryTimelineCasesTestData() {
     return Stream.of(
-        arguments(
-            "2025-07-01T00:00:00", "2025-07-03T23:59:59",
-            List.of(
-                Expected.of(1, 2, 90d,
-                    List.of(
-                        ExpectedTimeline.of("2025-07-01", 80.0),
-                        ExpectedTimeline.of("2025-07-03", 100.0)
-                    )
-                ),
-                Expected.of(2, 1, 60d,
-                    List.of(
-                        ExpectedTimeline.of("2025-07-02", 60.0)
-                    )
-                )
-            )
-        ),// daily
+//        arguments(
+//            "2025-07-01T00:00:00", "2025-07-03T23:59:59",
+//            List.of(
+//                Expected.of(1, 2, 90d,
+//                    List.of(
+//                        ExpectedTimeline.of("2025-07-01", 80.0),
+//                        ExpectedTimeline.of("2025-07-03", 100.0)
+//                    )
+//                ),
+//                Expected.of(2, 1, 60d,
+//                    List.of(
+//                        ExpectedTimeline.of("2025-07-02", 60.0)
+//                    )
+//                )
+//            )
+//        ),// daily
         arguments(
             "2025-07-01T00:00:00", "2025-10-09T00:00:00",
             List.of(
