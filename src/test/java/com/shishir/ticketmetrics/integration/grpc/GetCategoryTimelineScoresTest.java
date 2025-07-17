@@ -5,7 +5,6 @@ import com.shishir.ticketmetrics.testsupport.annotation.IntegrationTest;
 import com.shishir.ticketmetrics.testsupport.utl.GrpcTestUtil;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
-import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,6 +92,7 @@ public class GetCategoryTimelineScoresTest {
     
     assertThat(response.getScoresList()).hasSize(expectedScores.size());
     
+    // Transform response for comparison with expected output
     var actualScores = response.getScoresList().stream()
         .map(actualScore -> Expected.of(
             actualScore.getCategoryId(),
@@ -109,14 +109,28 @@ public class GetCategoryTimelineScoresTest {
         .containsExactlyInAnyOrderElementsOf(expectedScores.stream()
             .map(it -> tuple(it.categoryId, it.totalRatings, it.averageScore))
             .toList());
+    
+    var x = actualScores.stream()
+        .flatMap((Expected e) -> e.timeline.stream())
+        .toList();
+    
+    System.out.println(x);
+    
+    assertThat(x)
+        .extracting("date", "score")
+        .containsExactlyInAnyOrder(
+            tuple("2025-07-01T00:00:00", 80d),
+            tuple("2025-07-02T00:00:00", 60d),
+            tuple("2025-07-03T00:00:00", 100d)
+        );
   }
   
   static Stream<Arguments> categoryTimelineCasesTestData() {
     return Stream.of(
         arguments(
-            "2025-07-01T00:00:00", "2025-07-03T00:00:00",
+            "2025-07-01T00:00:00", "2025-07-03T23:59:59",
             List.of(
-                Expected.of(1, 1, 80d,
+                Expected.of(1, 2, 90d,
                     List.of(
                         ExpectedTimeline.of("", 1d),
                         ExpectedTimeline.of("", 1d)
