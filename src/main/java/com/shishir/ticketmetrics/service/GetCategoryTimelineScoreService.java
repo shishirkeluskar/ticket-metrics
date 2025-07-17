@@ -38,9 +38,7 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
     LOG.debug("categoryScoresByDate={}", categoryScoresByDate);
     
     if (isMoreThanMonth(startDate, endDate)) {
-      var x = groupByWeek(categoryScoresByDate);
-      
-      return x;
+      return groupByWeek(categoryScoresByDate);
     } else {
       return categoryScoresByDate;
     }
@@ -91,7 +89,7 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
       ));
     }
     
-    return categoryScoreSummaries;
+    return merged;
   }
   
   private List<CategoryScoreSummary> getScoresInRange(LocalDate startDate, LocalDate endDate) {
