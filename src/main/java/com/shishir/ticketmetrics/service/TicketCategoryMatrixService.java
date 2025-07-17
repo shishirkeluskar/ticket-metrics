@@ -3,7 +3,7 @@ package com.shishir.ticketmetrics.service;
 import com.shishir.ticketmetrics.cache.fn.TicketCategoryMatrixCalculator;
 import com.shishir.ticketmetrics.cache.store.TicketCategoryMatrixCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
-import com.shishir.ticketmetrics.model.CategoryScore;
+import com.shishir.ticketmetrics.model.CategoryScoreByTicket;
 import com.shishir.ticketmetrics.model.RatingWithCategoryWeight;
 import com.shishir.ticketmetrics.model.TicketXCategoryScores;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
@@ -123,7 +123,7 @@ public class TicketCategoryMatrixService implements TicketCategoryMatrixCalculat
                     Map.of(categoryId, ratingMap.get(categoryId)),
                     weightMap
                 ).setScale(6, RoundingMode.HALF_EVEN);
-                return CategoryScore.of(categoryId, score);
+                return CategoryScoreByTicket.of(categoryId, score);
               })
               .toList()
       );

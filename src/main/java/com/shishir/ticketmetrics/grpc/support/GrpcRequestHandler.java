@@ -97,7 +97,7 @@ public class GrpcRequestHandler {
     scoreMatrix.forEach(row -> {
       var ticketScoreBuilder = TicketCategoryScore.newBuilder();
       ticketScoreBuilder.setTicketId(row.ticketId());
-      row.categoryScores().forEach(categoryScore -> {
+      row.categoryScoreByTickets().forEach(categoryScore -> {
         double score = categoryScore.score().setScale(0, RoundingMode.HALF_EVEN).doubleValue();
         ticketScoreBuilder.putCategoryScores(categoryScore.categoryId(), score);
       });
