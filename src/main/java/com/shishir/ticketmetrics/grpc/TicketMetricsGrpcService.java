@@ -27,7 +27,7 @@ public class TicketMetricsGrpcService extends TicketMetricsServiceGrpc.TicketMet
   
   @Override
   public void getCategoryTimelineScores(CategoryTimelineRequest request, StreamObserver<CategoryTimelineResponse> responseObserver) {
-    handleGrpcCall(request, handler::handle, responseObserver);
+    handleGrpcCall(request, handler::handle2, responseObserver);
   }
   
   @Override

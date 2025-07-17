@@ -2,10 +2,7 @@ package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
 import com.shishir.ticketmetrics.model.CategoryScoreSummary;
-import com.shishir.ticketmetrics.service.OverallScoreService;
-import com.shishir.ticketmetrics.service.GetCategoryTimelineScoreService;
-import com.shishir.ticketmetrics.service.TicketCategoryMatrixService;
-import com.shishir.ticketmetrics.service.TicketScoreService;
+import com.shishir.ticketmetrics.service.*;
 import org.springframework.stereotype.Component;
 
 import java.math.RoundingMode;
@@ -20,12 +17,14 @@ public class GrpcRequestHandler {
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
   private final GetCategoryTimelineScoreService getCategoryTimelineScoreService;
+  private final GetCategoryTimelineScoreService2 getCategoryTimelineScoreService2;
   private final TicketCategoryMatrixService ticketCategoryMatrixService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, GetCategoryTimelineScoreService getCategoryTimelineScoreService, TicketCategoryMatrixService ticketCategoryMatrixService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, GetCategoryTimelineScoreService getCategoryTimelineScoreService, GetCategoryTimelineScoreService2 getCategoryTimelineScoreService2, TicketCategoryMatrixService ticketCategoryMatrixService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
     this.getCategoryTimelineScoreService = getCategoryTimelineScoreService;
+    this.getCategoryTimelineScoreService2 = getCategoryTimelineScoreService2;
     this.ticketCategoryMatrixService = ticketCategoryMatrixService;
   }
   
@@ -45,6 +44,43 @@ public class GrpcRequestHandler {
   }
   
   public CategoryTimelineResponse handle(CategoryTimelineRequest request) {
+    // Validate
+    validateCategoryTimelineRequest(request);
+    var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
+    var endDate = GrpcValidationUtils.parseIsoDateTime(request.getEndDate(), "end_date");
+    GrpcValidationUtils.validateDateOrder(startDate, endDate);
+    
+    // Process
+    Map<Integer, CategoryScoreSummary> scoreMap = getCategoryTimelineScoreService.getCategoryScoresOverTime(startDate, endDate);
+    
+    // Build response
+    var responseBuilder = CategoryTimelineResponse.newBuilder();
+    
+    for (Map.Entry<Integer, CategoryScoreSummary> entry : scoreMap.entrySet()) {
+      int categoryId = entry.getKey();
+      CategoryScoreSummary summary = entry.getValue();
+      
+      CategoryAggregateScore.Builder categoryScoreBuilder = CategoryAggregateScore.newBuilder()
+          .setCategoryId(categoryId)
+          .setTotalRatings(summary.getTotalRatings())
+          .setAverageScore(summary.getFinalAverageScore().doubleValue());
+      
+      // Aggregate scores based on rating creation date
+      summary.getDateScores().forEach((dateTime, score) -> {
+        categoryScoreBuilder.addTimeline(
+            CategoryScoreTimelineEntry.newBuilder()
+                .setDate(fromLocalDateTimetoString(dateTime))
+                .setScore(score.doubleValue())
+                .build()
+        );
+      });
+      
+      responseBuilder.addScores(categoryScoreBuilder.build());
+    }
+    return responseBuilder.build();
+  }
+  
+  public CategoryTimelineResponse handle2(CategoryTimelineRequest request) {
     // Validate
     validateCategoryTimelineRequest(request);
     var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
