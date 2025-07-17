@@ -15,13 +15,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.groups.Tuple.tuple;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
@@ -90,7 +89,6 @@ public class GetCategoryTimelineScoresTest {
     
     var response = grpcStub.getCategoryTimelineScores(request);
     
-    //assertThat(response.getScoresList()).hasSize(expectedScores.size());
     
     // Transform response for comparison with expected output
     var actualScores = response.getScoresList().stream()
@@ -104,46 +102,47 @@ public class GetCategoryTimelineScoresTest {
         ))
         .toList();
     
-    // Check categoryId, totalRatings, averageScores
-    assertThat(actualScores)
-        .extracting("categoryId", "totalRatings", "averageScore")
-        .containsExactlyInAnyOrderElementsOf(expectedScores.stream()
-            .map(it -> tuple(it.categoryId, it.totalRatings, it.averageScore))
-            .toList());
+    var categoryIds = actualScores.stream().map(it -> it.categoryId).toList();
     
-    // Check timelines
-    var actualTimeline = actualScores.stream()
-        .flatMap((Expected e) -> e.timeline.stream())
-        .toList();
-    var expectedTimeline = expectedScores.stream()
-        .map(it -> it.timeline)
-        .flatMap(Collection::stream)
-        .map(it -> tuple(it.date, it.score))
-        .toList();
-    
-    assertThat(actualTimeline)
-        .extracting("date", "score")
-        .containsExactlyInAnyOrderElementsOf(expectedTimeline);
+    for (var categoryId : categoryIds) {
+      var actualScore = actualScores.stream().filter(it -> Objects.equals(it.categoryId, categoryId)).findFirst().get();
+      var expectedScore = expectedScores.stream().filter(it -> Objects.equals(it.categoryId, categoryId)).findFirst().get();
+      
+      assertThat(actualScore)
+          .satisfies(it -> {
+            assertThat(it.categoryId).isEqualTo(expectedScore.categoryId);
+            assertThat(it.averageScore).isEqualTo(expectedScore.averageScore);
+            assertThat(it.totalRatings).isEqualTo(expectedScore.totalRatings);
+            
+            // Check timelines
+            var actualTimeline = it.timeline;
+            var expectedTimeline = expectedScore.timeline;
+            
+            assertThat(actualTimeline)
+                .as("Category id = " + it.categoryId)
+                .containsExactlyInAnyOrderElementsOf(expectedTimeline);
+          });
+    }
   }
   
   static Stream<Arguments> categoryTimelineCasesTestData() {
     return Stream.of(
-//        arguments(
-//            "2025-07-01T00:00:00", "2025-07-03T23:59:59",
-//            List.of(
-//                Expected.of(1, 2, 90d,
-//                    List.of(
-//                        ExpectedTimeline.of("2025-07-01", 80.0),
-//                        ExpectedTimeline.of("2025-07-03", 100.0)
-//                    )
-//                ),
-//                Expected.of(2, 1, 60d,
-//                    List.of(
-//                        ExpectedTimeline.of("2025-07-02", 60.0)
-//                    )
-//                )
-//            )
-//        ),// daily
+        arguments(
+            "2025-07-01T00:00:00", "2025-07-03T23:59:59",
+            List.of(
+                Expected.of(1, 2, 90d,
+                    List.of(
+                        ExpectedTimeline.of("2025-07-01", 80.0),
+                        ExpectedTimeline.of("2025-07-03", 100.0)
+                    )
+                ),
+                Expected.of(2, 1, 60d,
+                    List.of(
+                        ExpectedTimeline.of("2025-07-02", 60.0)
+                    )
+                )
+            )
+        ),// daily
         arguments(
             "2025-07-01T00:00:00", "2025-10-09T00:00:00",
             List.of(
@@ -153,24 +152,24 @@ public class GetCategoryTimelineScoresTest {
                         ExpectedTimeline.of("2025-07-28", 90.0),
                         ExpectedTimeline.of("2025-08-11", 92.0),
                         ExpectedTimeline.of("2025-09-08", 90.0),
-                        ExpectedTimeline.of("2025-07-21", 92.0),
-                        ExpectedTimeline.of("2025-07-14", 80.0),
-                        ExpectedTimeline.of("2025-08-04", 66.0),
-                        ExpectedTimeline.of("2025-07-07", 40.0),
-                        ExpectedTimeline.of("2025-08-04", 40.0)
+                        ExpectedTimeline.of("2025-07-21", 92.0)
                     )
                 ),
                 Expected.of(2, 7, 66d,
                     List.of(
+                        ExpectedTimeline.of("2025-07-14", 80.0),
                         ExpectedTimeline.of("2025-06-30", 70.0),
                         ExpectedTimeline.of("2025-07-28", 67.0),
                         ExpectedTimeline.of("2025-08-11", 65.0),
-                        ExpectedTimeline.of("2025-09-08", 64.0)
+                        ExpectedTimeline.of("2025-09-08", 64.0),
+                        ExpectedTimeline.of("2025-07-21", 63.0),
+                        ExpectedTimeline.of("2025-08-04", 66.0)
                     )
                 ),
                 Expected.of(3, 2, 40d,
                     List.of(
-                        ExpectedTimeline.of("2025-07-21", 63.0)
+                        ExpectedTimeline.of("2025-07-07", 40.0),
+                        ExpectedTimeline.of("2025-08-04", 40.0)
                     )
                 )
             )
