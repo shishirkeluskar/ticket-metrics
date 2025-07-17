@@ -52,11 +52,12 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
   }
   
   public List<CategoryScoreSummary> groupByWeek(List<CategoryScoreSummary> categoryScoreSummaries) {
-    var merged = new ArrayList<CategoryScoreSummary>();
+    LOG.debug("Begin merging category score summary");
+    var categoryScoreSummaryWithWeeklyTimeline = new ArrayList<CategoryScoreSummary>();
     
-    for (CategoryScoreSummary currC : categoryScoreSummaries) {
+    for (CategoryScoreSummary css : categoryScoreSummaries) {
       // Step 1: Group timeline per week
-      var mapTimelinePerWeek = currC.timeline().stream()
+      var mapTimelinePerWeek = css.timeline().stream()
           .collect(Collectors.groupingBy(
               it -> it.date().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
               Collectors.toList()
@@ -67,29 +68,26 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
       var scoreSum = BigDecimal.ZERO;
       var count = 0L;
       var timelinePerWeek = new ArrayList<CategoryScoreSummary.Timeline>();
-      
       for (var weekEntry : mapTimelinePerWeek.entrySet()) {
         var weekStartDate = weekEntry.getKey();
         var listOfDaysToMerge = weekEntry.getValue();
-        
         for (var value : listOfDaysToMerge) {
           count += 1;
           scoreSum = scoreSum.add(value.score());
         }
         var scoreAverage = scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN);
-        
         timelinePerWeek.add(CategoryScoreSummary.Timeline.of(weekStartDate, scoreAverage));
       }
       
-      merged.add(CategoryScoreSummary.of(
-          currC.categoryId(),
-          currC.ratingsCount(),
-          currC.averageScore(),
+      categoryScoreSummaryWithWeeklyTimeline.add(CategoryScoreSummary.of(
+          css.categoryId(),
+          css.ratingsCount(),
+          css.averageScore(),
           timelinePerWeek
       ));
     }
-    
-    return merged;
+    LOG.debug("Finished merging category score per week");
+    return categoryScoreSummaryWithWeeklyTimeline;
   }
   
   private List<CategoryScoreSummary> getScoresInRange(LocalDate startDate, LocalDate endDate) {
@@ -116,14 +114,14 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
           }
           var scoreAverage = count > 0 ? scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
           
-          var out = CategoryScoreSummary.of(
+          var categoryScoreSummary = CategoryScoreSummary.of(
               categoryId,
               ratingsCount,
               scoreAverage,
               timeline
           );
-          
-          return out;
+          LOG.debug("Created categoryScoreSummary={}", categoryScoreSummary);
+          return categoryScoreSummary;
         })
         .toList();
     
