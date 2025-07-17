@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,13 +54,13 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
   public List<CategoryScoreSummary> groupByWeek(List<CategoryScoreSummary> categoryScoreSummaries) {
     
     
-    
     return categoryScoreSummaries;
   }
   
   private List<CategoryScoreSummary> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     var categoryScoreStatsMap = startDate.datesUntil(endDate.plusDays(1))
         .map(date -> cacheStore.getOrCalculate(date, this::calculate))
+        .filter(Objects::nonNull)
         .flatMap(Collection::stream)
         .collect(Collectors.groupingBy(CategoryScoreStatsByRatingDate::categoryId, Collectors.toList()));
     

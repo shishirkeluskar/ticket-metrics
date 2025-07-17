@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.test.LocalGrpcPort;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -84,13 +85,12 @@ public class GetCategoryTimelineScoresTest {
   void canGetCategoryTimelineScores(
       String startDate,
       String endDate,
-      List<Expected> expectedScores,
-      Integer expectedDatesPerCategory) {
+      List<Expected> expectedScores) {
     var request = GrpcTestUtil.buildGetCategoryTimelineScoresRequest(startDate, endDate);
     
     var response = grpcStub.getCategoryTimelineScores(request);
     
-    assertThat(response.getScoresList()).hasSize(expectedScores.size());
+    //assertThat(response.getScoresList()).hasSize(expectedScores.size());
     
     // Transform response for comparison with expected output
     var actualScores = response.getScoresList().stream()
@@ -104,25 +104,26 @@ public class GetCategoryTimelineScoresTest {
         ))
         .toList();
     
+    // Check categoryId, totalRatings, averageScores
     assertThat(actualScores)
         .extracting("categoryId", "totalRatings", "averageScore")
         .containsExactlyInAnyOrderElementsOf(expectedScores.stream()
             .map(it -> tuple(it.categoryId, it.totalRatings, it.averageScore))
             .toList());
     
-    var x = actualScores.stream()
+    // Check timelines
+    var actualTimeline = actualScores.stream()
         .flatMap((Expected e) -> e.timeline.stream())
         .toList();
+    var expectedTimeline = expectedScores.stream()
+        .map(it -> it.timeline)
+        .flatMap(Collection::stream)
+        .map(it -> tuple(it.date, it.score))
+        .toList();
     
-    System.out.println(x);
-    
-    assertThat(x)
+    assertThat(actualTimeline)
         .extracting("date", "score")
-        .containsExactlyInAnyOrder(
-            tuple("2025-07-01", 80d),
-            tuple("2025-07-02", 60d),
-            tuple("2025-07-03", 100d)
-        );
+        .containsExactlyInAnyOrderElementsOf(expectedTimeline);
   }
   
   static Stream<Arguments> categoryTimelineCasesTestData() {
@@ -132,21 +133,50 @@ public class GetCategoryTimelineScoresTest {
             List.of(
                 Expected.of(1, 2, 90d,
                     List.of(
-                        ExpectedTimeline.of("", 1d),
-                        ExpectedTimeline.of("", 1d)
+                        ExpectedTimeline.of("2025-07-01", 80.0),
+                        ExpectedTimeline.of("2025-07-03", 100.0)
                     )
                 ),
                 Expected.of(2, 1, 60d,
                     List.of(
-                        ExpectedTimeline.of("", 1d),
-                        ExpectedTimeline.of("", 1d)
+                        ExpectedTimeline.of("2025-07-02", 60.0)
                     )
                 )
-            ),
-            1
-        ) // daily
-//        arguments("2025-06-01T00:00:00", "2025-07-10T00:00:00", 3, 1)  // weekly
-    );
+            )
+        ),// daily
+        arguments(
+            "2025-07-01T00:00:00", "2025-10-09T00:00:00",
+            List.of(
+                Expected.of(1, 7, 92d,
+                    List.of(
+                        ExpectedTimeline.of("2025-07-01", 80.0),
+                        ExpectedTimeline.of("2025-07-03", 100.0),
+                        ExpectedTimeline.of("2025-07-23", 100.0),
+                        ExpectedTimeline.of("2025-08-01", 90.0),
+                        ExpectedTimeline.of("2025-08-12", 100.0),
+                        ExpectedTimeline.of("2025-09-09", 80.0),
+                        ExpectedTimeline.of("2025-07-02", 60.0),
+                        ExpectedTimeline.of("2025-08-05", 40.0)
+                    )
+                ),
+                Expected.of(2, 7, 66d,
+                    List.of(
+                        ExpectedTimeline.of("2025-07-16", 80.0),
+                        ExpectedTimeline.of("2025-07-23", 60.0),
+                        ExpectedTimeline.of("2025-08-01", 60.0),
+                        ExpectedTimeline.of("2025-08-05", 80.0),
+                        ExpectedTimeline.of("2025-08-12", 60.0),
+                        ExpectedTimeline.of("2025-09-09", 60.0),
+                        ExpectedTimeline.of("2025-07-09", 40.0)
+                    )
+                ),
+                Expected.of(3, 2, 40d,
+                    List.of(
+                    )
+                )
+            )
+        )
+    );  // weekly
   }
   
   record Expected(
