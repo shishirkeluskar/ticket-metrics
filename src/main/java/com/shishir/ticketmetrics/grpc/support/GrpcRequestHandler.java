@@ -1,7 +1,7 @@
 package com.shishir.ticketmetrics.grpc.support;
 
 import com.shishir.ticketmetrics.generated.grpc.*;
-import com.shishir.ticketmetrics.service.GetCategoryTimelineScoreService2;
+import com.shishir.ticketmetrics.service.GetCategoryTimelineScoreService;
 import com.shishir.ticketmetrics.service.OverallScoreService;
 import com.shishir.ticketmetrics.service.TicketCategoryMatrixService;
 import com.shishir.ticketmetrics.service.TicketScoreService;
@@ -17,13 +17,13 @@ public class GrpcRequestHandler {
   
   private final TicketScoreService ticketScoreService;
   private final OverallScoreService overallScoreService;
-  private final GetCategoryTimelineScoreService2 getCategoryTimelineScoreService2;
+  private final GetCategoryTimelineScoreService getCategoryTimelineScoreService;
   private final TicketCategoryMatrixService ticketCategoryMatrixService;
   
-  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, GetCategoryTimelineScoreService2 getCategoryTimelineScoreService2, TicketCategoryMatrixService ticketCategoryMatrixService) {
+  public GrpcRequestHandler(TicketScoreService ticketScoreService, OverallScoreService overallScoreService, GetCategoryTimelineScoreService getCategoryTimelineScoreService, TicketCategoryMatrixService ticketCategoryMatrixService) {
     this.ticketScoreService = ticketScoreService;
     this.overallScoreService = overallScoreService;
-    this.getCategoryTimelineScoreService2 = getCategoryTimelineScoreService2;
+    this.getCategoryTimelineScoreService = getCategoryTimelineScoreService;
     this.ticketCategoryMatrixService = ticketCategoryMatrixService;
   }
   
@@ -42,7 +42,7 @@ public class GrpcRequestHandler {
         .build();
   }
   
-  public CategoryTimelineResponse handle2(CategoryTimelineRequest request) {
+  public CategoryTimelineResponse handle(CategoryTimelineRequest request) {
     // Validate
     validateCategoryTimelineRequest(request);
     var startDate = GrpcValidationUtils.parseIsoDateTime(request.getStartDate(), "start_date");
@@ -50,7 +50,7 @@ public class GrpcRequestHandler {
     GrpcValidationUtils.validateDateOrder(startDate, endDate);
     
     // Process
-    var scoresSummary = getCategoryTimelineScoreService2.getCategoryTimelineScores(startDate.toLocalDate(), endDate.toLocalDate());
+    var scoresSummary = getCategoryTimelineScoreService.getCategoryTimelineScores(startDate.toLocalDate(), endDate.toLocalDate());
     
     // Build response
     var responseBuilder = CategoryTimelineResponse.newBuilder();

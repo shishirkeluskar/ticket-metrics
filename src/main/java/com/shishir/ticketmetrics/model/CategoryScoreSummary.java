@@ -4,19 +4,19 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public record CategoryScoreSummary2(
+public record CategoryScoreSummary(
     Integer categoryId,
     Long ratingsCount,
     BigDecimal averageScore,
     List<Timeline> timeline
 ) {
-  public static CategoryScoreSummary2 of(
+  public static CategoryScoreSummary of(
       Integer categoryId,
       Long ratingsCount,
       BigDecimal averageScore,
       List<Timeline> timeline
   ) {
-    return new CategoryScoreSummary2(categoryId, ratingsCount, averageScore, timeline);
+    return new CategoryScoreSummary(categoryId, ratingsCount, averageScore, timeline);
   }
   
   public record Timeline(

@@ -4,7 +4,7 @@ import com.shishir.ticketmetrics.cache.fn.CategoryScoreByRatingDateCalculator;
 import com.shishir.ticketmetrics.cache.store.CategoryScoreByRatingDateCacheStore;
 import com.shishir.ticketmetrics.calculator.ScoreCalculator;
 import com.shishir.ticketmetrics.model.CategoryScoreStatsByRatingDate;
-import com.shishir.ticketmetrics.model.CategoryScoreSummary2;
+import com.shishir.ticketmetrics.model.CategoryScoreSummary;
 import com.shishir.ticketmetrics.persistence.dao.RatingDao;
 import com.shishir.ticketmetrics.persistence.dao.RatingStatsDao;
 import org.slf4j.Logger;
@@ -21,27 +21,27 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class GetCategoryTimelineScoreService2 implements CategoryScoreByRatingDateCalculator {
-  public static final Logger LOG = LoggerFactory.getLogger(GetCategoryTimelineScoreService2.class);
+public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDateCalculator {
+  public static final Logger LOG = LoggerFactory.getLogger(GetCategoryTimelineScoreService.class);
   
   private final CategoryScoreByRatingDateCacheStore cacheStore;
   private final RatingStatsDao ratingStatsDao;
   private final RatingDao ratingDao;
   
-  public GetCategoryTimelineScoreService2(CategoryScoreByRatingDateCacheStore cacheStore, RatingStatsDao ratingStatsDao, RatingDao ratingDao) {
+  public GetCategoryTimelineScoreService(CategoryScoreByRatingDateCacheStore cacheStore, RatingStatsDao ratingStatsDao, RatingDao ratingDao) {
     this.cacheStore = cacheStore;
     this.ratingStatsDao = ratingStatsDao;
     this.ratingDao = ratingDao;
   }
   
-  public List<CategoryScoreSummary2> getCategoryTimelineScores(LocalDate startDate, LocalDate endDate) {
+  public List<CategoryScoreSummary> getCategoryTimelineScores(LocalDate startDate, LocalDate endDate) {
     var x = getScoresInRange(startDate, endDate);
     
     LOG.debug("abc={}", x);
     return x;
   }
   
-  private List<CategoryScoreSummary2> getScoresInRange(LocalDate startDate, LocalDate endDate) {
+  private List<CategoryScoreSummary> getScoresInRange(LocalDate startDate, LocalDate endDate) {
     var categoryScoreStatsMap = startDate.datesUntil(endDate.plusDays(1))
         .map(date -> cacheStore.getOrCalculate(date, this::calculate))
         .flatMap(Collection::stream)
@@ -53,18 +53,18 @@ public class GetCategoryTimelineScoreService2 implements CategoryScoreByRatingDa
           var ratingsCount = 0L;
           var scoreSum = BigDecimal.ZERO;
           var count = 0L;
-          var timeline = new ArrayList<CategoryScoreSummary2.Timeline>();
+          var timeline = new ArrayList<CategoryScoreSummary.Timeline>();
           
           // Step 4: Compute average of scores per category
           for (var categoryScoreStats : e.getValue()) {
             count += 1;
             ratingsCount += categoryScoreStats.ratingCount();
             scoreSum = scoreSum.add(categoryScoreStats.scoreAverage());
-            timeline.add(CategoryScoreSummary2.Timeline.of(categoryScoreStats.ratingDate(), categoryScoreStats.scoreAverage()));
+            timeline.add(CategoryScoreSummary.Timeline.of(categoryScoreStats.ratingDate(), categoryScoreStats.scoreAverage()));
           }
           var scoreAverage = count > 0 ? scoreSum.divide(BigDecimal.valueOf(count), 6, RoundingMode.HALF_EVEN) : BigDecimal.ZERO;
           
-          var out = CategoryScoreSummary2.of(
+          var out = CategoryScoreSummary.of(
               categoryId,
               ratingsCount,
               scoreAverage,
