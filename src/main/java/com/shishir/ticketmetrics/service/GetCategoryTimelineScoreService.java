@@ -35,10 +35,30 @@ public class GetCategoryTimelineScoreService implements CategoryScoreByRatingDat
   }
   
   public List<CategoryScoreSummary> getCategoryTimelineScores(LocalDate startDate, LocalDate endDate) {
-    var x = getScoresInRange(startDate, endDate);
+    var categoryScoresByDate = getScoresInRange(startDate, endDate);
+    LOG.debug("categoryScoresByDate={}", categoryScoresByDate);
     
-    LOG.debug("abc={}", x);
-    return x;
+    if (isMoreThanMonth(startDate, endDate)) {
+      var x = groupByWeek(categoryScoresByDate);
+      
+      return x;
+    } else {
+      return categoryScoresByDate;
+    }
+  }
+  
+  private boolean isMoreThanMonth(LocalDate startDate, LocalDate endDate) {
+    boolean moreThanMonth = startDate.plusMonths(1).isBefore(endDate);
+    
+    LOG.debug("Difference in startDate={} and endDate={} is moreThanMonth={}", startDate, endDate, moreThanMonth);
+    return moreThanMonth;
+  }
+  
+  public List<CategoryScoreSummary> groupByWeek(List<CategoryScoreSummary> categoryScoreSummaries) {
+    
+    
+    
+    return categoryScoreSummaries;
   }
   
   private List<CategoryScoreSummary> getScoresInRange(LocalDate startDate, LocalDate endDate) {
