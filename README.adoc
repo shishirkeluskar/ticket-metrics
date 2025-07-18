@@ -6,14 +6,6 @@
 
 TicketMetrics is a Spring Boot gRPC service that calculates weighted scores for support tickets based on category ratings. It provides aggregated daily or weekly scores, per-ticket summaries, overall quality metrics, and period-over-period comparisons using SQLite and MyBatis for data access.
 
-== Features Implemented
-
-* Weighted ticket score algorithm (0–100%) using category weights and 0–5 ratings
-* Aggregated category scores over time (daily ≤ 1 month, weekly > 1 month)
-* Per-ticket category score aggregation within a date range
-* Overall quality score for a selected period
-* Period-over-period score comparison
-
 == Technology Stack
 
 * Java 21
@@ -22,6 +14,51 @@ TicketMetrics is a Spring Boot gRPC service that calculates weighted scores for 
 * MyBatis 3.0
 * SQLLite
 * gRPC
+
+== Features Implemented
+
+* Weighted ticket score algorithm (0–100%) using category weights and 0–5 ratings
+* Aggregated category scores over time (daily ≤ 1 month, weekly > 1 month)
+* Per-ticket category score aggregation within a date range
+* Overall quality score for a selected period
+* Period-over-period score comparison
+
+=== Scoring Strategy
+
+
+At the core is the `ScoreCalculator`, a shared component that normalizes raw ratings into percentage-based scores using predefined rules.
+
+All gRPC operations delegate to this calculator to ensure consistent score computation across different endpoints and aggregation levels.
+
+=== Caching Mechanism
+
+To optimize performance, the api uses multiple *on-demand caches*, where values are computed and stored upon first request (cache miss):
+
+- *Per-ticket score cache*
+Caches the normalized score of individual tickets.
+
+- *Category score per day cache*
+Caches aggregate scores of each category per day, supporting daily and weekly aggregation.
+
+- *Overall score per day cache*
+Caches overall quality scores across all tickets for a given day.
+
+These caches are *lazy-loaded* — scores are computed only on cache miss, stored for reuse, and then used in subsequent aggregations.
+
+=== Future Enhancements
+
+To further optimize scoring and support long-term data analysis:
+
+- *Introduce a `normalized_rating` table*
+Stores precomputed normalized scores, reducing the need for on-the-fly calculation.
+
+- *Move score aggregation to the database*
+With normalized ratings persisted, average scores can be queried directly via SQL.
+
+- *Back caches with database tables*
+Replace in-memory caches with persisted views or tables, enabling durability and batch preloading.
+
+These enhancements will enable better scalability, database-driven reporting, and reduced memory usage.
 
 == Spring Profiles
 
@@ -347,3 +384,4 @@ rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreCompar
     "score_change": 8
 }
 ----
+
