@@ -129,7 +129,7 @@ ticket-metrics   latest           0dee3d416e77   7 minutes ago    731MB
 
 === Setup Database
 
-* Copy SQLite database into ./app directory
+* Copy SQLite database into ./data directory
 +
 [source]
 ----
