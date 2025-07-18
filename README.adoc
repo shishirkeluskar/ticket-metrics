@@ -385,3 +385,36 @@ rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreCompar
 }
 ----
 
+== Bonus
+
+=== How I Would Build and Deploy the Solution?
+
+There are multiple ways to build and containerize the Spring Boot application:
+
+. *Manual Dockerfile (traditional method)*
+* Create a Dockerfile manually with steps to build and run the JAR inside a container.
+* Offers flexibility and full control over layers and dependencies.
+. *Using Jib (by Google)*
+* A Maven/Gradle plugin that builds optimized Docker images without requiring a Dockerfile.
+. *Using Spring Boot Buildpacks*
+* Spring Boot provides support for Cloud Native Buildpacks (via spring-boot:build-image) which create OCI-compliant images automatically.
+
+=== Deploying the Docker Image
+
+Once the Docker image is built, it can be deployed using various methods:
+
+* *Kubernetes (K8s)*
+** A widely adopted orchestration platform for containerized workloads.
+** Enables scalability, health checks, service discovery, and auto-restarts.
+* *CI/CD Pipelines*
+** Tools like Jenkins, GitLab CI, or GitHub Actions can be used to automate testing, building, and deploying the app.
+* *GitOps (Modern Practice)*
+** GitOps tools like ArgoCD or Flux allow for declarative deployment based on Git commits.
+
+=== Other Considerations
+* *Environment Configuration*
+** Use Spring Profiles or environment variables for dev/staging/prod configuration.
+* *Monitoring & Logging*
+** Use tools like Prometheus, Grafana, and ELK stack to monitor performance and collect logs from containers.
+* *Scaling & Load Balancing*
+** Kubernetes makes it easy to horizontally scale the app based on load using HorizontalPodAutoscaler.
