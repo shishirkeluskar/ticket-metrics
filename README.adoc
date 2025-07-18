@@ -113,5 +113,237 @@ When application runs via docker-compose it is looks for database in this direct
 docker-compose up
 ----
 This will:
-* Start the application (core-banking-api):
+
+* Start the application (ticket-metrics):
 ** URL: http://localhost:9090/
+
+== Project Structure Overview
+
+This project follows a modular and testable layout suitable for gRPC and caching-heavy analytics services.
+
+[source]
+----
+.
+├── build.gradle.kts             // Gradle build script
+├── data/                        // External SQLite DB volume mount
+│   └── database.db
+├── docker-compose.yml          // Docker setup with volume mount
+├── src/
+│   ├── main/
+│   │   ├── java/com/shishir/ticketmetrics/
+│   │   │   ├── Application.java
+│   │   │   ├── cache/           // Caching logic (config, functions, stores)
+│   │   │   ├── calculator/      // Shared scoring logic
+│   │   │   ├── grpc/            // gRPC entrypoints and helpers
+│   │   │   ├── model/           // Domain models
+│   │   │   ├── persistence/     // DAOs, DB DTOs, and DB models
+│   │   │   └── service/         // Feature services (timeline, score, matrix)
+│   │   ├── proto/               // gRPC protobuf definition
+│   │   └── resources/           // Configuration and SQLite DB
+│   │       └── sqllite-db/database.db
+│
+│   └── test/                    // Tests organized by type
+│       ├── integration/         // End-to-end gRPC and service tests
+│       ├── unit/                // Calculator unit tests
+│       ├── testsupport/         // Annotations and test utilities
+│       └── resources/
+│           ├── sql/             // Test data SQL scripts
+│           └── sqllite-db/test.db
+├── README.adoc                 // Project documentation
+└── gradle/ + wrappers           // Gradle wrapper files
+----
+
+== API Endpoints
+
+All gRPC endpoints are defined in the `TicketMetricsService`.
+
+=== GetTicketScore
+
+Returns the overall quality score of a single ticket.
+
+[source,protobuf]
+----
+rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "ticket_id": 57922
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "score": 12
+}
+----
+
+=== GetCategoryTimelineScores
+
+Returns average scores for each category over a period.
+
+* Daily aggregation if the period is ≤ 1 month
+*  Weekly aggregation (starting Monday) if the period is > 1 month
+
+[source,protobuf]
+----
+rpc GetCategoryTimelineScores (CategoryTimelineRequest) returns (CategoryTimelineResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "start_date": "2019-03-01T00:00:00",
+    "end_date": "2019-04-02T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "scores": [
+        {
+            "timeline": [
+                {
+                    "date": "2019-03-11",
+                    "score": 50
+                },
+                {
+                    "date": "2019-03-25",
+                    "score": 49
+                },
+                ...
+            ],
+            "category_id": 1,
+            "total_ratings": 902,
+            "average_score": 49
+        },
+        {
+            "timeline": [...],
+            "category_id": 2,
+            "total_ratings": 902,
+            "average_score": 50
+        },
+        {
+            "timeline": [...],
+            "category_id": 3,
+            "total_ratings": 902,
+            "average_score": 52
+        },
+        {
+            "timeline": [...],
+            "category_id": 4,
+            "total_ratings": 902,
+            "average_score": 0
+        }
+    ]
+}
+----
+
+=== GetTicketCategoryMatrix
+
+Returns a matrix of category scores for all tickets rated during the given date range.
+
+[source,protobuf]
+----
+rpc GetTicketCategoryMatrix (TicketCategoryMatrixRequest) returns (TicketCategoryMatrixResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "start_date": "2019-02-25T00:00:00",
+    "end_date": "2019-02-26T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "ticket_scores": [
+        {
+            "category_scores": {
+                "1": 100,
+                "2": 0,
+                "3": 40,
+                "4": 0
+            },
+            "ticket_id": 619328
+        },
+        {
+            "category_scores": {
+                "1": 40,
+                "2": 80,
+                "3": 100,
+                "4": 0
+            },
+            "ticket_id": 555213
+        },
+        ...
+    ]
+}
+----
+
+=== GetOverallQualityScore
+
+Computes the average score across all tickets rated in the specified period.
+
+[source,protobuf]
+----
+rpc GetOverallQualityScore(OverallQualityScoreRequest) returns (OverallQualityScoreResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "start_date": "2020-01-26T00:00:00",
+    "end_date": "2020-02-26T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "score": 36
+}
+----
+
+=== ComparePeriodScores
+
+Compares average scores between two different periods.
+
+[source,protobuf]
+----
+rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreComparisonResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "current_start_date": "2020-01-01T00:00:00",
+    "current_end_date": "2020-03-31T00:00:00",
+    "previous_start_date": "2019-01-01T00:00:00",
+    "previous_end_date": "2019-03-31T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "current_period_score": 22,
+    "previous_period_score": 15,
+    "score_change": 8
+}
+----
