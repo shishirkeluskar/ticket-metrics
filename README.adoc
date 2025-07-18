@@ -1,0 +1,117 @@
+= Ticket Metrics
+:toc:
+:sectnums:
+
+== Project Overview
+
+TicketMetrics is a Spring Boot gRPC service that calculates weighted scores for support tickets based on category ratings. It provides aggregated daily or weekly scores, per-ticket summaries, overall quality metrics, and period-over-period comparisons using SQLite and MyBatis for data access.
+
+== Features Implemented
+
+* Weighted ticket score algorithm (0–100%) using category weights and 0–5 ratings
+* Aggregated category scores over time (daily ≤ 1 month, weekly > 1 month)
+* Per-ticket category score aggregation within a date range
+* Overall quality score for a selected period
+* Period-over-period score comparison
+
+== Technology Stack
+
+* Java 21
+* Spring Boot 3.4
+* Gradle 8.14
+* MyBatis 3.0
+* SQLLite
+* gRPC
+
+== Spring Profiles
+
+* `local` – For local development.
+* `prod` – Activated when running via *Docker Compose*. Mimics production-like environment.
+* `unit-test` – Applied during unit tests.
+* `integration-test` – Used during integration tests. Enables full app wiring.
+
+== Build & Run Instructions
+
+=== Prerequisites
+
+* Java 21+
+* Gradle 8+
+* Git
+
+=== Clone Repository
+
+* Clone git repository from git hub
++
+[source]
+----
+git clone https://github.com/shishirkeluskar/ticket-metrics.git
+----
+* Change to the cloned project.
++
+[source]
+----
+cd ticket-metrics
+----
+
+=== Build
+
+==== Build project
+[source]
+----
+./gradlew clean build
+----
+
+==== Build docker image
+[source]
+----
+./gradlew jibDockerBuild
+
+## -----------------
+# Prossible error
+# * What went wrong:
+Execution failed for task ':jibDockerBuild'.
+> com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException: Failed to read output of 'docker info': java.io.IOException: Cannot run program "docker": error=2, No such file or directory
+
+## -----------------
+# Use below workaround:
+# See: https://github.com/GoogleContainerTools/jib/issues/2777
+# Workdound:
+./gradlew jibDockerBuild -Djib.dockerClient.executable=$(which docker)
+----
+
+==== Verify docker image is produced
+[source]
+----
+docker images
+
+# Above command will produce output similar to this:
+REPOSITORY       TAG              IMAGE ID       CREATED          SIZE
+ticket-metrics   0.0.1-SNAPSHOT   0dee3d416e77   7 minutes ago    731MB
+ticket-metrics   latest           0dee3d416e77   7 minutes ago    731MB
+----
+
+=== Setup Database
+
+* Copy SQLite database into ./app directory
++
+[source]
+----
+├── build.gradle.kts
+├── data
+│   └── database.db     <-- database file
+├── docker-compose.yml
+├── gradle
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+----
+When application runs via docker-compose it is looks for database in this directory.
+
+=== Run Application
+[source]
+----
+docker-compose up
+----
+This will:
+* Start the application (core-banking-api):
+** URL: http://localhost:9090/
