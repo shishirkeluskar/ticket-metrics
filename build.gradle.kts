@@ -6,6 +6,7 @@ plugins {
     id("org.springframework.boot") version "3.5.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.google.protobuf") version "0.9.4"
+    id("com.google.cloud.tools.jib") version "3.4.5"
 }
 
 group = "com.shishir.ticketmetrics"
@@ -126,4 +127,16 @@ tasks.jacocoTestCoverageVerification {
 
 tasks.check {
     dependsOn(tasks.jacocoTestCoverageVerification)
+}
+
+jib {
+    from {
+        image = "eclipse-temurin:21-jdk-alpine"
+    }
+    to {
+        tags = setOf("latest")
+    }
+    container {
+        creationTime = "USE_CURRENT_TIMESTAMP"
+    }
 }

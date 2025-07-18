@@ -1,0 +1,420 @@
+= Ticket Metrics
+:toc:
+:sectnums:
+
+== Project Overview
+
+TicketMetrics is a Spring Boot gRPC service that calculates weighted scores for support tickets based on category ratings. It provides aggregated daily or weekly scores, per-ticket summaries, overall quality metrics, and period-over-period comparisons using SQLite and MyBatis for data access.
+
+== Technology Stack
+
+* Java 21
+* Spring Boot 3.4
+* Gradle 8.14
+* MyBatis 3.0
+* SQLLite
+* gRPC
+
+== Features Implemented
+
+* Weighted ticket score algorithm (0–100%) using category weights and 0–5 ratings
+* Aggregated category scores over time (daily ≤ 1 month, weekly > 1 month)
+* Per-ticket category score aggregation within a date range
+* Overall quality score for a selected period
+* Period-over-period score comparison
+
+=== Scoring Strategy
+
+
+At the core is the `ScoreCalculator`, a shared component that normalizes raw ratings into percentage-based scores using predefined rules.
+
+All gRPC operations delegate to this calculator to ensure consistent score computation across different endpoints and aggregation levels.
+
+=== Caching Mechanism
+
+To optimize performance, the api uses multiple *on-demand caches*, where values are computed and stored upon first request (cache miss):
+
+- *Per-ticket score cache*
+Caches the normalized score of individual tickets.
+
+- *Category score per day cache*
+Caches aggregate scores of each category per day, supporting daily and weekly aggregation.
+
+- *Overall score per day cache*
+Caches overall quality scores across all tickets for a given day.
+
+These caches are *lazy-loaded* — scores are computed only on cache miss, stored for reuse, and then used in subsequent aggregations.
+
+=== Future Enhancements
+
+To further optimize scoring and support long-term data analysis:
+
+- *Introduce a `normalized_rating` table*
+Stores precomputed normalized scores, reducing the need for on-the-fly calculation.
+
+- *Move score aggregation to the database*
+With normalized ratings persisted, average scores can be queried directly via SQL.
+
+- *Back caches with database tables*
+Replace in-memory caches with persisted views or tables, enabling durability and batch preloading.
+
+These enhancements will enable better scalability, database-driven reporting, and reduced memory usage.
+
+== Spring Profiles
+
+* `local` – For local development.
+* `prod` – Activated when running via *Docker Compose*. Mimics production-like environment.
+* `unit-test` – Applied during unit tests.
+* `integration-test` – Used during integration tests. Enables full app wiring.
+
+== Build & Run Instructions
+
+=== Prerequisites
+
+* Java 21+
+* Gradle 8+
+* Git
+
+=== Clone Repository
+
+* Clone git repository from git hub
++
+[source]
+----
+git clone https://github.com/shishirkeluskar/ticket-metrics.git
+----
+* Change to the cloned project.
++
+[source]
+----
+cd ticket-metrics
+----
+
+=== Build
+
+==== Build project
+[source]
+----
+./gradlew clean build
+----
+
+==== Build docker image
+[source]
+----
+./gradlew jibDockerBuild
+
+## -----------------
+# Prossible error
+# * What went wrong:
+Execution failed for task ':jibDockerBuild'.
+> com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException: Failed to read output of 'docker info': java.io.IOException: Cannot run program "docker": error=2, No such file or directory
+
+## -----------------
+# Use below workaround:
+# See: https://github.com/GoogleContainerTools/jib/issues/2777
+# Workdound:
+./gradlew jibDockerBuild -Djib.dockerClient.executable=$(which docker)
+----
+
+==== Verify docker image is produced
+[source]
+----
+docker images
+
+# Above command will produce output similar to this:
+REPOSITORY       TAG              IMAGE ID       CREATED          SIZE
+ticket-metrics   0.0.1-SNAPSHOT   0dee3d416e77   7 minutes ago    731MB
+ticket-metrics   latest           0dee3d416e77   7 minutes ago    731MB
+----
+
+=== Setup Database
+
+* Copy SQLite database into ./data directory
++
+[source]
+----
+├── build.gradle.kts
+├── data
+│   └── database.db     <-- database file
+├── docker-compose.yml
+├── gradle
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+----
+When application runs via docker-compose it is looks for database in this directory.
+
+=== Run Application
+[source]
+----
+docker-compose up
+----
+This will:
+
+* Start the application (ticket-metrics):
+** URL: http://localhost:9090/
+
+== Project Structure Overview
+
+This project follows a modular and testable layout suitable for gRPC and caching-heavy analytics services.
+
+[source]
+----
+.
+├── build.gradle.kts             // Gradle build script
+├── data/                        // External SQLite DB volume mount
+│   └── database.db
+├── docker-compose.yml          // Docker setup with volume mount
+├── src/
+│   ├── main/
+│   │   ├── java/com/shishir/ticketmetrics/
+│   │   │   ├── Application.java
+│   │   │   ├── cache/           // Caching logic (config, functions, stores)
+│   │   │   ├── calculator/      // Shared scoring logic
+│   │   │   ├── grpc/            // gRPC entrypoints and helpers
+│   │   │   ├── model/           // Domain models
+│   │   │   ├── persistence/     // DAOs, DB DTOs, and DB models
+│   │   │   └── service/         // Feature services (timeline, score, matrix)
+│   │   ├── proto/               // gRPC protobuf definition
+│   │   └── resources/           // Configuration and SQLite DB
+│   │       └── sqllite-db/database.db
+│
+│   └── test/                    // Tests organized by type
+│       ├── integration/         // End-to-end gRPC and service tests
+│       ├── unit/                // Calculator unit tests
+│       ├── testsupport/         // Annotations and test utilities
+│       └── resources/
+│           ├── sql/             // Test data SQL scripts
+│           └── sqllite-db/test.db
+├── README.adoc                 // Project documentation
+└── gradle/ + wrappers           // Gradle wrapper files
+----
+
+== API Endpoints
+
+All gRPC endpoints are defined in the `TicketMetricsService`.
+
+=== GetTicketScore
+
+Returns the overall quality score of a single ticket.
+
+[source,protobuf]
+----
+rpc GetTicketScore(GetTicketScoreRequest) returns (GetTicketScoreResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "ticket_id": 57922
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "score": 12
+}
+----
+
+=== GetCategoryTimelineScores
+
+Returns average scores for each category over a period.
+
+* Daily aggregation if the period is ≤ 1 month
+*  Weekly aggregation (starting Monday) if the period is > 1 month
+
+[source,protobuf]
+----
+rpc GetCategoryTimelineScores (CategoryTimelineRequest) returns (CategoryTimelineResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "start_date": "2019-03-01T00:00:00",
+    "end_date": "2019-04-02T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "scores": [
+        {
+            "timeline": [
+                {
+                    "date": "2019-03-11",
+                    "score": 50
+                },
+                {
+                    "date": "2019-03-25",
+                    "score": 49
+                },
+                ...
+            ],
+            "category_id": 1,
+            "total_ratings": 902,
+            "average_score": 49
+        },
+        {
+            "timeline": [...],
+            "category_id": 2,
+            "total_ratings": 902,
+            "average_score": 50
+        },
+        {
+            "timeline": [...],
+            "category_id": 3,
+            "total_ratings": 902,
+            "average_score": 52
+        },
+        {
+            "timeline": [...],
+            "category_id": 4,
+            "total_ratings": 902,
+            "average_score": 0
+        }
+    ]
+}
+----
+
+=== GetTicketCategoryMatrix
+
+Returns a matrix of category scores for all tickets rated during the given date range.
+
+[source,protobuf]
+----
+rpc GetTicketCategoryMatrix (TicketCategoryMatrixRequest) returns (TicketCategoryMatrixResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "start_date": "2019-02-25T00:00:00",
+    "end_date": "2019-02-26T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "ticket_scores": [
+        {
+            "category_scores": {
+                "1": 100,
+                "2": 0,
+                "3": 40,
+                "4": 0
+            },
+            "ticket_id": 619328
+        },
+        {
+            "category_scores": {
+                "1": 40,
+                "2": 80,
+                "3": 100,
+                "4": 0
+            },
+            "ticket_id": 555213
+        },
+        ...
+    ]
+}
+----
+
+=== GetOverallQualityScore
+
+Computes the average score across all tickets rated in the specified period.
+
+[source,protobuf]
+----
+rpc GetOverallQualityScore(OverallQualityScoreRequest) returns (OverallQualityScoreResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "start_date": "2020-01-26T00:00:00",
+    "end_date": "2020-02-26T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "score": 36
+}
+----
+
+=== ComparePeriodScores
+
+Compares average scores between two different periods.
+
+[source,protobuf]
+----
+rpc ComparePeriodScores(PeriodScoreComparisonRequest) returns (PeriodScoreComparisonResponse);
+----
+
+.Sample Request
+[source,json]
+----
+{
+    "current_start_date": "2020-01-01T00:00:00",
+    "current_end_date": "2020-03-31T00:00:00",
+    "previous_start_date": "2019-01-01T00:00:00",
+    "previous_end_date": "2019-03-31T00:00:00"
+}
+----
+
+.Sample Response
+[source,json]
+----
+{
+    "current_period_score": 22,
+    "previous_period_score": 15,
+    "score_change": 8
+}
+----
+
+== Bonus
+
+=== How I Would Build and Deploy the Solution?
+
+There are multiple ways to build and containerize the Spring Boot application:
+
+. *Manual Dockerfile (traditional method)*
+* Create a Dockerfile manually with steps to build and run the JAR inside a container.
+* Offers flexibility and full control over layers and dependencies.
+. *Using Jib (by Google)*
+* A Maven/Gradle plugin that builds optimized Docker images without requiring a Dockerfile.
+. *Using Spring Boot Buildpacks*
+* Spring Boot provides support for Cloud Native Buildpacks (via spring-boot:build-image) which create OCI-compliant images automatically.
+
+=== Deploying the Docker Image
+
+Once the Docker image is built, it can be deployed using various methods:
+
+* *Kubernetes (K8s)*
+** A widely adopted orchestration platform for containerized workloads.
+** Enables scalability, health checks, service discovery, and auto-restarts.
+* *CI/CD Pipelines*
+** Tools like Jenkins, GitLab CI, or GitHub Actions can be used to automate testing, building, and deploying the app.
+* *GitOps (Modern Practice)*
+** GitOps tools like ArgoCD or Flux allow for declarative deployment based on Git commits.
+
+=== Other Considerations
+* *Environment Configuration*
+** Use Spring Profiles or environment variables for dev/staging/prod configuration.
+* *Monitoring & Logging*
+** Use tools like Prometheus, Grafana, and ELK stack to monitor performance and collect logs from containers.
+* *Scaling & Load Balancing*
+** Kubernetes makes it easy to horizontally scale the app based on load using HorizontalPodAutoscaler.
