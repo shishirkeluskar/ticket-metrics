@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@ActiveProfiles("est")
+@ActiveProfiles("test")
 @Tag("test")
 public @interface UnitTest {
 }

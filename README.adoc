@@ -64,7 +64,7 @@ These enhancements will enable better scalability, database-driven reporting, an
 
 * `local` – For local development.
 * `prod` – Activated when running via *Docker Compose*. Mimics production-like environment.
-* `unit-test` – Applied during unit tests.
+* `test` – Applied during unit tests.
 * `integration-test` – Used during integration tests. Enables full app wiring.
 
 == Build & Run Instructions
